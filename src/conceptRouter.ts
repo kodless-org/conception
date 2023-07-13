@@ -3,7 +3,7 @@ import {Request, Response, NextFunction} from "express";
 
 type ExpressMiddleware = (req: Request, res: Response, next: NextFunction) => void;
 
-export default class WebConcept<Params> {
+export default class ConceptRouter<Params> {
   public readonly router = express.Router();
 
   constructor(public readonly name: string) {}

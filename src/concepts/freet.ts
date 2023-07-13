@@ -1,9 +1,11 @@
-import WebConcept from "../concept";
+import ConceptDb from "../conceptDb";
+import WebConcept from "../conceptRouter";
 
 interface Freet {
-  // TODO
+  author: string;
+  content: string;
 }
 
-const freet = new WebConcept("freet");
-freet.read([]);
+const freet = new ConceptDb<Freet>("freet");
+
 export default freet;
