@@ -1,8 +1,10 @@
 import express from "express";
 import logger from "morgan";
 import cors from "cors";
+import session from 'express-session';
 
 import freet from "./concepts/freet";
+import user from "./concepts/user";
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -11,9 +13,20 @@ app.use(logger("dev"));
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({extended: false}));
+app.use(session({
+  secret: 'Hello 6.1040',
+  resave: true,
+  saveUninitialized: false,
+}));
+
+declare module 'express-session' {
+  export interface SessionData {
+    userId: import("mongodb").ObjectId;
+  }
+}
 
 // Register your concepts!
-[freet]
+[freet, user]
 .forEach(concept => {
   app.use('/api/' + concept.name, concept.router);
 });

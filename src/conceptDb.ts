@@ -49,16 +49,12 @@ export default class ConceptDb<Schema extends ConceptBase> {
     return await this.collection.replaceOne({_id} as Filter<Schema>, item, options);
   }
   
-  async updateOne(filter: Filter<Schema>, update: UpdateFilter<Schema>, options?: FindOneAndUpdateOptions): Promise<UpdateResult<Schema>> {
-    return await this.collection.updateOne(filter, update, options);
+  async updateOne(filter: Filter<Schema>, update: Partial<Schema>, options?: FindOneAndUpdateOptions): Promise<UpdateResult<Schema>> {
+    return await this.collection.updateOne(filter, {$set: update}, options);
   }
 
-  async updateOneById(_id: ObjectId, update: UpdateFilter<Schema>, options?: FindOneAndUpdateOptions): Promise<UpdateResult<Schema>> {
-    return await this.collection.updateOne({_id} as Filter<Schema>, update, options);
-  }
-
-  async updateMany(filter: Filter<Schema>, update: UpdateFilter<Schema>, options?: UpdateOptions): Promise<UpdateResult<Schema>> {
-    return await this.collection.updateMany(filter, update, options);
+  async updateOneById(_id: ObjectId, update: Partial<Schema>, options?: FindOneAndUpdateOptions): Promise<UpdateResult<Schema>> {
+    return await this.collection.updateOne({_id: new ObjectId(_id)} as Filter<Schema>, {$set: update}, options);
   }
 
   async deleteOne(filter: Filter<Schema>, options?: DeleteOptions): Promise<DeleteResult> {

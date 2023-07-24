@@ -3,10 +3,8 @@ import { Request, Response, NextFunction, RequestHandler } from "express";
 import { OptionalUnlessRequiredId, Document, ObjectId, Filter, BulkWriteOptions } from "mongodb";
 import ConceptDb, { ConceptBase } from "./conceptDb";
 
-export type RequestFinalHandler = RequestHandler; // no next()
-
 export type Validator = RequestHandler;
-export type Action = RequestFinalHandler;
+export type Action = RequestHandler;
 
 export type ActionOptions = {
   'validate'?: Validator[],
@@ -15,13 +13,12 @@ export type ActionOptions = {
 export default class ConceptRouter<Schema extends ConceptBase, Db extends ConceptDb<Schema> = ConceptDb<Schema>> {
   public readonly name: string;
   public readonly router = express.Router();
-  private readonly actions: Record<string, Action>;
-  private readonly options: Record<string, ActionOptions>;
-  private readonly syncs: Record<string, Action[]>;
+  private readonly actions: Record<string, Action> = {};
+  private readonly options: Record<string, ActionOptions> = {};
+  private readonly syncs: Record<string, Action[]> = {};
 
   constructor(public readonly db: Db) {
     this.name = db.name;
-    this.actions = this.options = this.syncs = {};
   }
 
   public action(name: string): Action {
@@ -31,7 +28,7 @@ export default class ConceptRouter<Schema extends ConceptBase, Db extends Concep
     return this.actions[name];
   }
 
-  public defineAction(name: string, action: RequestFinalHandler, options?: ActionOptions): void {
+  public defineAction(name: string, action: RequestHandler, options?: ActionOptions): void {
     if (name in this.actions) {
       throw new Error(`Action ${name} already defined in ${this.name} concept!`);
     }
@@ -39,9 +36,21 @@ export default class ConceptRouter<Schema extends ConceptBase, Db extends Concep
     if (options) this.options[name] = options;
   }
 
-  public sync(actionName: string, action: Action): void {
-    if (!(actionName in this.syncs)) this.syncs[actionName] = [];
-    this.syncs[actionName].push(action);
+  public sync(name: string, action: Action): void {
+    if (!(name in this.syncs)) this.syncs[name] = [];
+    this.syncs[name].push(action);
+  }
+
+  public handlers(name: string): RequestHandler[] {
+    if (!(name in this.actions)) {
+      throw new Error(`Action ${name} is not defined!`);
+    }
+    const handlers = [];
+    if (name in this.options) {
+      handlers.push(...this.options[name].validate || []);
+    }
+    handlers.push(this.actions[name]);
+    return handlers;
   }
 
   /**
@@ -76,7 +85,7 @@ export default class ConceptRouter<Schema extends ConceptBase, Db extends Concep
     this.defineAction('read', async (req: Request, res: Response) => {
       const filter = req.query.filter as Filter<Schema>;
       const documents = await this.db.readMany(filter, {
-        'sort': {dateUpdated: -1}
+        'sort': { dateUpdated: -1 }
       });
       res.json({ documents });
     }, options);
