@@ -12,16 +12,15 @@ export type ActionOptions = {
   'validate'?: Validator[],
 };
 
-export default class ConceptRouter<Schema extends ConceptBase> {
-
+export default class ConceptRouter<Schema extends ConceptBase, Db extends ConceptDb<Schema> = ConceptDb<Schema>> {
+  public readonly name: string;
   public readonly router = express.Router();
-  private readonly db: ConceptDb<Schema>;
   private readonly actions: Record<string, Action>;
   private readonly options: Record<string, ActionOptions>;
   private readonly syncs: Record<string, Action[]>;
 
-  constructor(public readonly name: string) {
-    this.db = new ConceptDb<Schema>(name);
+  constructor(public readonly db: Db) {
+    this.name = db.name;
     this.actions = this.options = this.syncs = {};
   }
 

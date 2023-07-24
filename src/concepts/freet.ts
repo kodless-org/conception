@@ -1,6 +1,6 @@
 import { Filter, ObjectId } from "mongodb";
 import ConceptDb, { ConceptBase } from "../conceptDb";
-import ConceptRouter from "../conceptRouter";
+import ConceptRouter, { ActionOptions } from "../conceptRouter";
 import { NextFunction, Request, Response } from "express";
 
 interface Freet extends ConceptBase {
@@ -31,6 +31,12 @@ class FreetDb extends ConceptDb<Freet> {
   }
 }
 
-const freet = new ConceptRouter<Freet>("freet");
+class FreetRouter extends ConceptRouter<Freet, FreetDb> {
+  public defineSomeAction(options?: ActionOptions) {
+    this.db.duplicateOne;
+  }
+}
+
+const freet = new ConceptRouter<Freet, FreetDb>(new FreetDb("freet"));
 
 export default freet;
