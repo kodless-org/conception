@@ -1,81 +1,125 @@
 import express from "express";
-import {Request, Response, NextFunction} from "express";
-import { OptionalUnlessRequiredId, Document, ObjectId, Filter } from "mongodb";
-import ConceptDb from "./conceptDb";
+import { Request, Response, NextFunction, RequestHandler } from "express";
+import { OptionalUnlessRequiredId, Document, ObjectId, Filter, BulkWriteOptions } from "mongodb";
+import ConceptDb, { ConceptBase } from "./conceptDb";
 
-export type ExpressMiddleware = (req: Request, res: Response, next: NextFunction) => void;
+export type RequestFinalHandler = RequestHandler; // no next()
 
-/**
- * ConceptRouter defines base routes for a concept based on CRRUDS (read car-rads) model:
- * - Create: make a new document
- * - Read: read one document based on its identifier
- * - Replace: replace one document based on its identifier
- * - Update: update one document based on its identifier
- * - Delete: delete one document based on its identifier
- * - Search: search for documents given a filter
- * 
- * 
- * 
- * If you want to add more functionality to it, extend this class and define similar rules!
- */
-export default class ConceptRouter<Schema extends Document> {
+export type Validator = RequestHandler;
+export type Action = RequestFinalHandler;
+
+export type ActionOptions = {
+  'validate'?: Validator[],
+};
+
+export default class ConceptRouter<Schema extends ConceptBase> {
 
   public readonly router = express.Router();
-  protected readonly db;
+  private readonly db: ConceptDb<Schema>;
+  private readonly actions: Record<string, Action>;
+  private readonly options: Record<string, ActionOptions>;
+  private readonly syncs: Record<string, Action[]>;
 
   constructor(public readonly name: string) {
     this.db = new ConceptDb<Schema>(name);
+    this.actions = this.options = this.syncs = {};
+  }
+
+  public action(name: string): Action {
+    if (!(name in this.actions)) {
+      throw new Error(`Action ${name} does not exist in ${this.name} concept!`);
+    }
+    return this.actions[name];
+  }
+
+  public defineAction(name: string, action: RequestFinalHandler, options?: ActionOptions): void {
+    if (name in this.actions) {
+      throw new Error(`Action ${name} already defined in ${this.name} concept!`);
+    }
+    this.actions[name] = action;
+    if (options) this.options[name] = options;
+  }
+
+  public sync(actionName: string, action: Action): void {
+    if (!(actionName in this.syncs)) this.syncs[actionName] = [];
+    this.syncs[actionName].push(action);
   }
 
   /**
-   * Creates one Freet object from `req.body.document` and responds with the created document
-   * with its _id field in `document`.
+   * Defines action "create":
    * 
-   * @param happensBefore middlewares that will run before
-   * @param happensAfter middlewares that will run after
+   * @matches
+   *  - `req.document`: Document to create.
+   * @affects
+   *  - Create the given document.
+   * @returns JSON with following fields:
+   *  - `document`: Created document, including its `_id` field.
    */
-  public create(happensBefore: ExpressMiddleware[] = [], happensAfter: ExpressMiddleware[] = []) {
-    this.router.post("/", happensBefore, async (req: Request, res: Response, next: NextFunction) => {
-      const item = req.body.document as OptionalUnlessRequiredId<Schema>;
-      console.log(item);
-      const _id = (await this.db.createOne(item)).insertedId;
-      res.json({ document: {_id, ...item} });
-      next();
-    }, happensAfter);
+  public defineCreateAction(options?: ActionOptions) {
+    this.defineAction('create', async (req: Request, res: Response) => {
+      const document = req.body.document as Schema;
+      document.dateCreated = document.dateUpdated = new Date();
+      const _id = (await this.db.createOne(document)).insertedId;
+      res.json({ document: { _id, ...document } });
+    }, options);
   }
 
   /**
-   * Gets a freet by id and reponds it in `document`.
+   * Defines action "read":
    * 
-   * @param happensBefore middlewares that will run before
-   * @param happensAfter middlewares that will run after
+   * @requires
+   *  - `req.query`: Filter for documents to read (@see https://www.mongodb.com/docs/drivers/node/current/fundamentals/crud/query-document/#specify-a-query)
+   * @affects Nothing.
+   * @returns JSON with following fields:
+   *  - `documents`: All matching documents sorted in order of `dateUpdated` (newest first).
    */
-  public read(happensBefore: ExpressMiddleware[] = [], happensAfter: ExpressMiddleware[] = []) {
-    this.router.get("/:id", happensBefore, async (req: Request, res: Response, next: NextFunction) => {
-      const item = await this.db.readOne({_id: new ObjectId(req.params.id)} as Filter<Schema>);
-      res.json({ document: item });
-      next();
-    }, happensAfter);
+  public defineReadAction(options?: ActionOptions) {
+    this.defineAction('read', async (req: Request, res: Response) => {
+      const filter = req.query.filter as Filter<Schema>;
+      const documents = await this.db.readMany(filter, {
+        'sort': {dateUpdated: -1}
+      });
+      res.json({ documents });
+    }, options);
   }
 
-  // public update(happensBefore: ExpressMiddleware[]) {
-  //   this.router.get("/:id", happensBefore, async (req: Request, res: Response) => {
-  //     // something
-  //   });
-  // }
+  /**
+   * Defines action "update":
+   * 
+   * @requires
+   *  - `req.params._id`: ID of the document to update
+   *  - `req.body.partialDocument`: Patch to the document.
+   * @affects
+   *  - Update fields in `req.body.partialDocument` in document with id `req.params._id`
+   *    with given new values.
+   * @returns JSON with following fields:
+   *  - `document`: Updated document.
+   */
+  public defineUpdateAction(options?: ActionOptions) {
+    this.defineAction('update', async (req: Request, res: Response) => {
+      const update = req.body.partialDocument as Partial<Schema>;
+      const _id = new ObjectId(req.params._id);
+      await this.db.updateOneById(_id, update);
+      const document = await this.db.readOneById(_id);
+      res.json({ document });
+    }, options);
+  }
 
-  // public delete(happensBefore: ExpressMiddleware[]) {
-  //   this.router.get("/:id", happensBefore, async (req: Request, res: Response) => {
-  //     // something
-  //   });
-  // }
-
-  // public search()
+  /**
+   * Defines action "delete":
+   * 
+   * @requires
+   *  - `req.params._id`: ID of the document to delete
+   * @affects
+   *  - Delete document with given id.
+   * @returns JSON with following fields:
+   *  - `document`: Deleted document or null if it was not found.
+   */
+  public defineDeleteAction(options?: ActionOptions) {
+    this.defineAction('delete', async (req: Request, res: Response) => {
+      const _id = new ObjectId(req.params._id);
+      const document = await this.db.popOneById(_id);
+      res.json({ document });
+    }, options);
+  }
 }
-
-/*
-{
-  id: ,
-  ...
-}
-*/

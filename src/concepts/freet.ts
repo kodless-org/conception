@@ -1,16 +1,16 @@
-import { Filter, ObjectId, WithId } from "mongodb";
-import ConceptDb from "../conceptDb";
-import ConceptRouter, { ExpressMiddleware } from "../conceptRouter";
+import { Filter, ObjectId } from "mongodb";
+import ConceptDb, { ConceptBase } from "../conceptDb";
+import ConceptRouter from "../conceptRouter";
 import { NextFunction, Request, Response } from "express";
 
-interface Freet {
+interface Freet extends ConceptBase {
   author: string;
   content: string;
 }
 
 class FreetDb extends ConceptDb<Freet> {
   // example for convenience:
-  async getAuthorFreets(name: string): Promise<WithId<Freet>[]> {
+  async getAuthorFreets(name: string): Promise<Freet[]> {
     return this.readMany({author: name});
   }
 
@@ -32,35 +32,5 @@ class FreetDb extends ConceptDb<Freet> {
 }
 
 const freet = new ConceptRouter<Freet>("freet");
-
-freet.create();
-freet.read();
-// boom, now we can create and read freets in two lines!
-
-/*
-More interesting example:
-e.g., make sure you are logged in before creating a freet, and after you create one, notify friends
-freet.create([loggedIn, validateCreate], [nofifyFriends]);
-
-Idea: have more generalized validation since it comes up all the time
-and writing it inside array is not as elegant!
-*/
-
-// let's make more complex router
-class FreetRouter extends ConceptRouter<Freet> {
-  // e.g., skip happensBefore and happensAfter since I don't want them for this!
-  async spamFritter() {
-    this.router.post("/spam", async (req: Request, res: Response, next: NextFunction) => {
-      const freet = req.body.document as Freet;
-      this.db.createMany([{...freet}, {...freet}, {...freet}, {...freet}]);
-      res.json({ message: "CHAOS!" });
-    });
-  }
-}
-
-const chaosFreet = new FreetRouter("chaosFreet");
-chaosFreet.create();
-chaosFreet.read();
-chaosFreet.spamFritter();
 
 export default freet;
