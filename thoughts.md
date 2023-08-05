@@ -16,3 +16,16 @@ Let's see pros and cons.
 Keep the feature, con is not strong enough.
 
 ---
+
+### Concern
+Let's say we implement singleton concepts with defintion of "one instance per user." Notice that the "user" part is arbitrary -- why not "one instance per C" where C any concept? This brings us question: is `Upvote` concept a non-singleton concept or a `SingletonConcept<Freet>`?
+
+Who "owns" the upvote -- is it the freet or the user?
+
+### Thoughts
+Not sure yet.
+
+### Decision
+Not sure yet.
+
+---
