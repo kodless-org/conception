@@ -1,6 +1,6 @@
 import express from "express";
-import { Request, Response, NextFunction, RequestHandler } from "express";
-import { OptionalUnlessRequiredId, Document, ObjectId, Filter, BulkWriteOptions } from "mongodb";
+import { Request, Response, RequestHandler } from "express";
+import { ObjectId, Filter } from "mongodb";
 import ConceptDb, { ConceptBase } from "./conceptDb";
 
 export type Validator = RequestHandler;

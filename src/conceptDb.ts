@@ -1,8 +1,8 @@
 import {
   Collection, Document,
-  Filter, UpdateFilter,
+  Filter,
   OptionalUnlessRequiredId, WithoutId,
-  FindOptions, BulkWriteOptions, DeleteOptions, UpdateOptions, FindOneAndUpdateOptions, CountDocumentsOptions,
+  FindOptions, BulkWriteOptions, DeleteOptions, FindOneAndUpdateOptions, CountDocumentsOptions,
   InsertOneResult, InsertManyResult, DeleteResult, UpdateResult, ReplaceOptions, ObjectId
 } from "mongodb";
 
@@ -12,7 +12,7 @@ export interface ConceptBase extends Document {
   _id: ObjectId;
   dateCreated: Date;
   dateUpdated: Date;
-};
+}
 
 export default class ConceptDb<Schema extends ConceptBase> {
   protected readonly collection: Collection<Schema>;
@@ -40,7 +40,7 @@ export default class ConceptDb<Schema extends ConceptBase> {
   }
 
   async readOneById(_id: ObjectId, options?: FindOptions): Promise<Schema | null> {
-    return await this.readOne({_id} as Filter<Schema>, options);
+    return await this.readOne({ _id } as Filter<Schema>, options);
   }
 
   async readMany(filter: Filter<Schema>, options?: FindOptions): Promise<Schema[]> {
@@ -52,17 +52,17 @@ export default class ConceptDb<Schema extends ConceptBase> {
   }
 
   async replaceOneById(_id: ObjectId, item: WithoutId<Schema>, options?: ReplaceOptions): Promise<UpdateResult<Schema> | Document> {
-    return await this.collection.replaceOne({_id} as Filter<Schema>, item, options);
+    return await this.collection.replaceOne({ _id } as Filter<Schema>, item, options);
   }
-  
+
   async updateOne(filter: Filter<Schema>, update: Partial<Schema>, options?: FindOneAndUpdateOptions): Promise<UpdateResult<Schema>> {
     update.dateUpdated = new Date();
-    return await this.collection.updateOne(filter, {$set: update}, options);
+    return await this.collection.updateOne(filter, { $set: update }, options);
   }
 
   async updateOneById(_id: ObjectId, update: Partial<Schema>, options?: FindOneAndUpdateOptions): Promise<UpdateResult<Schema>> {
     update.dateUpdated = new Date();
-    return await this.collection.updateOne({_id: new ObjectId(_id)} as Filter<Schema>, {$set: update}, options);
+    return await this.collection.updateOne({ _id: new ObjectId(_id) } as Filter<Schema>, { $set: update }, options);
   }
 
   async deleteOne(filter: Filter<Schema>, options?: DeleteOptions): Promise<DeleteResult> {
@@ -70,7 +70,7 @@ export default class ConceptDb<Schema extends ConceptBase> {
   }
 
   async deleteOneById(_id: ObjectId, options?: DeleteOptions): Promise<DeleteResult> {
-    return await this.collection.deleteOne({_id} as Filter<Schema>, options);
+    return await this.collection.deleteOne({ _id } as Filter<Schema>, options);
   }
 
   async deleteMany(filter: Filter<Schema>, options?: DeleteOptions): Promise<DeleteResult> {
@@ -86,11 +86,11 @@ export default class ConceptDb<Schema extends ConceptBase> {
     if (one === null) {
       return null;
     }
-    await this.deleteOne({_id: one._id} as Filter<Schema>);
+    await this.deleteOne({ _id: one._id } as Filter<Schema>);
     return one;
   }
 
   async popOneById(_id: ObjectId): Promise<Schema | null> {
-    return this.popOne({_id} as Filter<Schema>);
+    return this.popOne({ _id } as Filter<Schema>);
   }
 }
