@@ -9,7 +9,7 @@ import {
 import db from "./db";
 
 export interface ConceptBase extends Document {
-  _id?: ObjectId;
+  _id: ObjectId;
   dateCreated: Date;
   dateUpdated: Date;
 };
@@ -22,10 +22,16 @@ export default class ConceptDb<Schema extends ConceptBase> {
   }
 
   async createOne(item: Schema): Promise<InsertOneResult> {
+    item.dateCreated = new Date();
+    item.dateUpdated = new Date();
     return await this.collection.insertOne(item as OptionalUnlessRequiredId<Schema>);
   }
 
   async createMany(items: Schema[], options?: BulkWriteOptions): Promise<InsertManyResult> {
+    items.forEach(item => {
+      item.dateCreated = new Date();
+      item.dateUpdated = new Date();
+    });
     return await this.collection.insertMany(items as OptionalUnlessRequiredId<Schema>[], options);
   }
 
@@ -50,10 +56,12 @@ export default class ConceptDb<Schema extends ConceptBase> {
   }
   
   async updateOne(filter: Filter<Schema>, update: Partial<Schema>, options?: FindOneAndUpdateOptions): Promise<UpdateResult<Schema>> {
+    update.dateUpdated = new Date();
     return await this.collection.updateOne(filter, {$set: update}, options);
   }
 
   async updateOneById(_id: ObjectId, update: Partial<Schema>, options?: FindOneAndUpdateOptions): Promise<UpdateResult<Schema>> {
+    update.dateUpdated = new Date();
     return await this.collection.updateOne({_id: new ObjectId(_id)} as Filter<Schema>, {$set: update}, options);
   }
 

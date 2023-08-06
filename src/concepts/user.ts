@@ -30,23 +30,23 @@ class UserActions {
       res.status(401).json({msg: "Username or password is incorrect."});
       return;
     }
-    req.session.userId = user._id;
+    req.session.user = {_id: user._id, username: user.username};
     res.json({msg: "Successfully logged in."});
   }
 
   static logOut(req: Request, res: Response) {
-    req.session.userId = undefined;
+    req.session.user = undefined;
   }
 
   static async update(req: Request, res: Response) {
     const update = req.body.document as Partial<User>;
-    await userDb.updateOneById(req.session.userId!, update);
+    await userDb.updateOneById(req.session.user!._id, update);
     res.json({msg: "Updated user successfully!"});
   }
 
   static async delete(req: Request, res: Response) {
-    await userDb.deleteOneById(req.session.userId!);
-    req.session.userId = undefined; // log out
+    await userDb.deleteOneById(req.session.user!._id);
+    req.session.user = undefined; // log out
     res.json({msg: "You deleted your account"});
   }
 }

@@ -2,6 +2,7 @@ import { Filter, ObjectId } from "mongodb";
 import ConceptDb, { ConceptBase } from "../conceptDb";
 import ConceptRouter, { ActionOptions } from "../conceptRouter";
 import { NextFunction, Request, Response } from "express";
+import { Validators } from "../utils";
 
 interface Freet extends ConceptBase {
   author: string;
@@ -9,34 +10,23 @@ interface Freet extends ConceptBase {
 }
 
 class FreetDb extends ConceptDb<Freet> {
-  // example for convenience:
   async getAuthorFreets(name: string): Promise<Freet[]> {
-    return this.readMany({author: name});
-  }
-
-  // more complex example (notice how we can easily use this.existingMethod without touching MongoDb!):
-  /**
-   * Duplicates item with given id.
-   * 
-   * @param id `_id` of the item to be duplicated
-   * @returns `null` if there was no such item or duplicated item's `_id`
-   */
-  async duplicateOne(id: ObjectId): Promise<ObjectId | null> {
-    const item = await this.readOne({_id: id});
-    if (item === null) {
-      return null;
-    }
-    const {_id: _, ...copyItem} = item;
-    return (await this.createOne(copyItem)).insertedId;
+    return await this.readMany({author: name});
   }
 }
 
-class FreetRouter extends ConceptRouter<Freet, FreetDb> {
-  public defineSomeAction(options?: ActionOptions) {
-    this.db.duplicateOne;
+class FreetValidators {
+  static async isOwner(req: Request, res: Response, next: NextFunction) {
+    const freet = req.body.document as Freet;
+    if (freet.author !== req.session.user?.username) {
+      
+    }
   }
 }
 
 const freet = new ConceptRouter<Freet, FreetDb>(new FreetDb("freet"));
+
+freet.defineCreateAction({'validate': [Validators.loggedOut]});
+// freet.defineDeleteAction({'validate': []});
 
 export default freet;

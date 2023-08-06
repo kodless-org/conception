@@ -21,7 +21,11 @@ app.use(session({
 
 declare module 'express-session' {
   export interface SessionData {
-    userId: import("mongodb").ObjectId;
+    // Keeping this data minimal since it will be sent in every request.
+    user: {
+      _id: import("mongodb").ObjectId,
+      username: string,
+    }
   }
 }
 

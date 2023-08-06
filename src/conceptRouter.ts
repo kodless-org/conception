@@ -66,9 +66,8 @@ export default class ConceptRouter<Schema extends ConceptBase, Db extends Concep
   public defineCreateAction(options?: ActionOptions) {
     this.defineAction('create', async (req: Request, res: Response) => {
       const document = req.body.document as Schema;
-      document.dateCreated = document.dateUpdated = new Date();
       const _id = (await this.db.createOne(document)).insertedId;
-      res.json({ document: { _id, ...document } });
+      res.json({ document: { ...document, _id } });
     }, options);
   }
 
