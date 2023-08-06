@@ -16,6 +16,6 @@ For now, see [thoughts](https://github.com/BarishNamazov/conception/blob/main/th
 
 - [ ] Move methods for defining concepts, creating routers, etc. to decorators. See [#1](https://github.com/BarishNamazov/conception/pull/1) for rough idea.
 
-- [ ] Using decorators again, make actions work with the contents of request directly rather than deal with `req` and `res`.
+- [X] Using decorators again, make actions work with the contents of request directly rather than deal with `req` and `res`.
 
 - [ ] Implement singleton concept base (i.e., easy user has only one of that object).
