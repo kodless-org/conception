@@ -29,3 +29,14 @@ Not sure yet.
 Not sure yet.
 
 ---
+
+### Concern
+MongoDB functions silently fail when passing in `string` rather than `ObjectId`.
+
+### Thoughts
+Need to define a convention or allow both but cast? Is it even good idea to go with `_id` naming?
+
+### Decision
+Not sure yet.
+
+---
