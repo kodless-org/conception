@@ -17,9 +17,9 @@ class FreetValidators {
 const freetDb = new ConceptDb<Freet>("freet");
 const freet = new ConceptRouter<Freet>(freetDb);
 
-freet.defineCreateAction({ 'validate': [] });
+freet.defineCreateAction({ 'validate': [FreetValidators.isOwner] });
 freet.defineDeleteAction({ 'validate': [FreetValidators.isOwner] });
-freet.defineUpdateAction({ 'validate': [] });
+freet.defineUpdateAction({ 'validate': [FreetValidators.isOwner] });
 freet.defineReadAction();
 
 freet.router.get("/", ...freet.handlers("read"));
