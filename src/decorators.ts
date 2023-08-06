@@ -1,7 +1,8 @@
-import { Request, RequestHandler, Response } from "express";
+import { NextFunction, Request, RequestHandler, Response } from "express";
+import { HttpError } from "./conceptRouter";
 
-export function makeRoute(f: Function): RequestHandler {
-  return (req: Request, res: Response) => {
+export function makeRoute(f: Function, isValidator: boolean = false): RequestHandler {
+  return async (req: Request, res: Response, next: NextFunction) => {
     const reqMap = (name: string) => {
       if (name === "session" || name == "query") {
         return req[name];
@@ -16,14 +17,29 @@ export function makeRoute(f: Function): RequestHandler {
     const args = f.toString().match(/\((.*?)\)/)![1].split(",") // Simple regex to get "name: type" items in signature
                   .map((param: string) => param.split("=")[0].trim()) // remove default values and whitespaces
                   .map(reqMap);
-    const result = f.apply(null, args);
-    if (result instanceof Promise) {
-      result.then(result => res.json(result)).catch(err => {
-        console.log(err);
-        res.status(500).json({ msg: "Internal Server Error" });
-      });
+
+    
+    let result;
+    try {
+      result = f.apply(null, args);
+      if (result instanceof Promise) {
+        result = await result;
+      }
+    } catch (e: any) {
+      res.status(e?.code ?? 500).json({msg: e?.message ?? "Internal Server Error"});
+      return;
+    }
+
+    if (isValidator) {
+      next(); // do not send result, go to the next step
     } else {
       res.json(result);
     }
   }
+}
+
+export function makeValidator(f: Function): RequestHandler {
+  return async (req: Request, res: Response, next: NextFunction) => {
+    makeRoute(f, true)(req, res, next);
+  };
 }

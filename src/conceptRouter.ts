@@ -2,7 +2,7 @@ import express from "express";
 import { Request, Response, RequestHandler } from "express";
 import { ObjectId, Filter } from "mongodb";
 import ConceptDb, { ConceptBase } from "./conceptDb";
-import { makeRoute } from "./decorators";
+import { makeRoute, makeValidator } from "./decorators";
 import { SessionData } from "express-session";
 
 export type Validator = RequestHandler;
@@ -11,8 +11,15 @@ export type Action = Function;
 export type Session = Partial<SessionData>;
 
 export type ActionOptions = {
-  'validate'?: Validator[],
+  'validate'?: Function[],
 };
+
+export class HttpError extends Error {
+  constructor(public readonly code: number, public readonly message: string) {
+    super(message);
+    this.code = code;
+  }
+}
 
 export default class ConceptRouter<Schema extends ConceptBase, Db extends ConceptDb<Schema> = ConceptDb<Schema>> {
   public readonly name: string;
@@ -51,7 +58,7 @@ export default class ConceptRouter<Schema extends ConceptBase, Db extends Concep
     }
     const handlers = [];
     if (name in this.options) {
-      handlers.push(...this.options[name].validate || []);
+      handlers.push(...this.options[name].validate?.map(makeValidator) || []);
     }
     handlers.push(this.actions[name]);
     return handlers;

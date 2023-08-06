@@ -1,8 +1,7 @@
 import ConceptDb, { ConceptBase } from "../conceptDb";
-import ConceptRouter, {type Session} from "../conceptRouter";
-import { NextFunction, Request, Response } from "express";
+import ConceptRouter, {HttpError, type Session} from "../conceptRouter";
 import { Validators } from "../utils";
-  
+
 interface User extends ConceptBase {
   username: string;
   password: string;
@@ -45,13 +44,10 @@ class UserActions {
 }
 
 class UserValidators {
-  static async canCreate(req: Request, res: Response, next: NextFunction) {
-    const user = req.body.document as User;
-    if (await userDb.readOne({ username: user.username })) {
-      res.status(401).json({ msg: "User with this username already exists!" });
-      return;
+  static async canCreate(document: User) {
+    if (await userDb.readOne({ username: document.username })) {
+      throw new HttpError(401, "User with this username already exists!");
     }
-    next();
   }
 }
 

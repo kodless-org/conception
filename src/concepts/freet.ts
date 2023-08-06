@@ -1,5 +1,5 @@
 import ConceptDb, { ConceptBase } from "../conceptDb";
-import ConceptRouter from "../conceptRouter";
+import ConceptRouter, { HttpError, Session } from "../conceptRouter";
 import { NextFunction, Request, Response } from "express";
 
 interface Freet extends ConceptBase {
@@ -8,13 +8,10 @@ interface Freet extends ConceptBase {
 }
 
 class FreetValidators {
-  static async isOwner(req: Request, res: Response, next: NextFunction) {
-    const freet = req.body.document as Freet;
-    if (freet.author !== req.session.user?.username) {
-      res.status(401).json({ msg: "You don't own this freet!" });
-      return;
+  static async isOwner(document: Freet, session: Session) {
+    if (document.author !== session.user?.username) {
+      throw new HttpError(401, "You don't own this freet!");
     }
-    next();
   }
 }
 

@@ -1,19 +1,16 @@
+import { HttpError, Session } from "./conceptRouter";
 import { Request, Response, NextFunction } from "express";
 
 export class Validators {
-  static loggedOut(req: Request, res: Response, next: NextFunction) {
-    if (req.session.user) {
-      res.status(401).json({ msg: "You need to be logged out!" });
-      return;
+  static loggedOut(session: Session) {
+    if (session.user) {
+      throw new HttpError(401, "You need to be logged out!");
     }
-    next();
   }
 
-  static loggedIn(req: Request, res: Response, next: NextFunction) {
-    if (!req.session.user) {
-      res.status(401).json({ msg: "You need to be logged in!" });
-      return;
+  static loggedIn(session: Session) {
+    if (!session.user) {
+      throw new HttpError(401, "You need to be logged in!");
     }
-    next();
   }
 }
