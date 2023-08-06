@@ -1,9 +1,8 @@
-import { Filter } from "mongodb";
 import ConceptDb, { ConceptBase } from "../conceptDb";
-import ConceptRouter from "../conceptRouter";
+import ConceptRouter, {type Session} from "../conceptRouter";
 import { NextFunction, Request, Response } from "express";
 import { Validators } from "../utils";
-
+  
 interface User extends ConceptBase {
   username: string;
   password: string;
@@ -11,44 +10,37 @@ interface User extends ConceptBase {
 }
 
 class UserActions {
-  static async readSafe(req: Request, res: Response) {
-    const filter = req.query.filter as Filter<User>;
-    if (filter?.password) {
-      res.status(403).json({ msg: "Filtering users with password? Not on my watch!" });
-    }
-    const users = (await userDb.readMany(filter)).map(user => {
+  static async readSafe(username?: string) {
+    const users = (await userDb.readMany(username ? { username } : {})).map(user => {
       const { password, ...rest } = user; // remove password
       return rest;
     });
-    res.json({ documents: users });
+    return { documents: users };
   }
 
-  static async logIn(req: Request, res: Response) {
-    const userReq = req.body.document as User;
-    const user = await userDb.readOne({ username: userReq.username, password: userReq.password });
+  static async logIn(document: User, session: Session) {
+    const user = await userDb.readOne({ username: document.username, password: document.password });
     if (!user) {
-      res.status(401).json({ msg: "Username or password is incorrect." });
-      return;
+      return { msg: "Username or password is incorrect." };
     }
-    req.session.user = { _id: user._id, username: user.username };
-    res.json({ msg: "Successfully logged in." });
+    session.user = { _id: user._id, username: user.username };
+    return { msg: "Successfully logged in." };
   }
 
-  static logOut(req: Request, res: Response) {
-    req.session.user = undefined;
-    res.json({ msg: "Successfully logged out." });
+  static logOut(session: Session) {
+    session.user = undefined;
+    return { msg: "Successfully logged out." };
   }
 
-  static async update(req: Request, res: Response) {
-    const update = req.body.document as Partial<User>;
-    await userDb.updateOneById(req.session.user!._id, update);
-    res.json({ msg: "Updated user successfully!" });
+  static async update(document: Partial<User>, session: Session) {
+    await userDb.updateOneById(session.user!._id, document);
+    return { msg: "Updated user successfully!" };
   }
 
-  static async delete(req: Request, res: Response) {
-    await userDb.deleteOneById(req.session.user!._id);
-    req.session.user = undefined; // log out
-    res.json({ msg: "You deleted your account" });
+  static async delete(session: Session) {
+    await userDb.deleteOneById(session.user!._id);
+    session.user = undefined; // log out
+    return { msg: "You deleted your account" };
   }
 }
 

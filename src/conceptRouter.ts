@@ -2,9 +2,13 @@ import express from "express";
 import { Request, Response, RequestHandler } from "express";
 import { ObjectId, Filter } from "mongodb";
 import ConceptDb, { ConceptBase } from "./conceptDb";
+import { makeRoute } from "./decorators";
+import { SessionData } from "express-session";
 
 export type Validator = RequestHandler;
-export type Action = RequestHandler;
+export type Action = Function;
+
+export type Session = Partial<SessionData>;
 
 export type ActionOptions = {
   'validate'?: Validator[],
@@ -13,7 +17,7 @@ export type ActionOptions = {
 export default class ConceptRouter<Schema extends ConceptBase, Db extends ConceptDb<Schema> = ConceptDb<Schema>> {
   public readonly name: string;
   public readonly router = express.Router();
-  private readonly actions: Record<string, Action> = {};
+  private readonly actions: Record<string, RequestHandler> = {};
   private readonly options: Record<string, ActionOptions> = {};
   private readonly syncs: Record<string, Action[]> = {};
 
@@ -28,11 +32,11 @@ export default class ConceptRouter<Schema extends ConceptBase, Db extends Concep
     return this.actions[name];
   }
 
-  public defineAction(name: string, action: RequestHandler, options?: ActionOptions): void {
+  public defineAction(name: string, action: Action, options?: ActionOptions): void {
     if (name in this.actions) {
       throw new Error(`Action ${name} already defined in ${this.name} concept!`);
     }
-    this.actions[name] = action;
+    this.actions[name] = makeRoute(action);
     if (options) this.options[name] = options;
   }
 
@@ -64,10 +68,9 @@ export default class ConceptRouter<Schema extends ConceptBase, Db extends Concep
    *  - `document`: Created document, including its `_id` field.
    */
   public defineCreateAction(options?: ActionOptions) {
-    this.defineAction('create', async (req: Request, res: Response) => {
-      const document = req.body.document as Schema;
+    this.defineAction('create', async (document: Schema) => {
       const _id = (await this.db.createOne(document)).insertedId;
-      res.json({ document: { ...document, _id } });
+      return { document: { ...document, _id } };
     }, options);
   }
 
@@ -81,12 +84,11 @@ export default class ConceptRouter<Schema extends ConceptBase, Db extends Concep
    *  - `documents`: All matching documents sorted in order of `dateUpdated` (newest first).
    */
   public defineReadAction(options?: ActionOptions) {
-    this.defineAction('read', async (req: Request, res: Response) => {
-      const filter = req.query.filter as Filter<Schema>;
-      const documents = await this.db.readMany(filter, {
+    this.defineAction('read', async (query: Filter<Schema>) => {
+      const documents = await this.db.readMany(query, {
         'sort': { dateUpdated: -1 }
       });
-      res.json({ documents });
+      return { documents };
     }, options);
   }
 
@@ -103,12 +105,10 @@ export default class ConceptRouter<Schema extends ConceptBase, Db extends Concep
    *  - `document`: Updated document.
    */
   public defineUpdateAction(options?: ActionOptions) {
-    this.defineAction('update', async (req: Request, res: Response) => {
-      const update = req.body.partialDocument as Partial<Schema>;
-      const _id = new ObjectId(req.params._id);
-      await this.db.updateOneById(_id, update);
-      const document = await this.db.readOneById(_id);
-      res.json({ document });
+    this.defineAction('update', async (_id: string, update: Partial<Schema>) => {
+      const id = new ObjectId(_id);
+      await this.db.updateOneById(id, update);
+      return { document: await this.db.readOneById(id) };
     }, options);
   }
 
@@ -123,10 +123,9 @@ export default class ConceptRouter<Schema extends ConceptBase, Db extends Concep
    *  - `document`: Deleted document or null if it was not found.
    */
   public defineDeleteAction(options?: ActionOptions) {
-    this.defineAction('delete', async (req: Request, res: Response) => {
-      const _id = new ObjectId(req.params._id);
-      const document = await this.db.popOneById(_id);
-      res.json({ document });
+    this.defineAction('delete', async (_id: string) => {
+      const id = new ObjectId(_id);
+      return { document: await this.db.popOneById(id) };
     }, options);
   }
 }
