@@ -1,5 +1,4 @@
-import { NextFunction, Request, RequestHandler, Response } from "express";
-import { HttpError } from "./conceptRouter";
+import { Request, Response, NextFunction, RequestHandler } from "express";
 
 export function makeRoute(f: Function, isValidator: boolean = false): RequestHandler {
   return async (req: Request, res: Response, next: NextFunction) => {
@@ -9,7 +8,7 @@ export function makeRoute(f: Function, isValidator: boolean = false): RequestHan
       }
       const ret = req.params[name] || req.query[name] || req.body[name];
       if (ret === undefined || ret === null) {
-        console.log(`${ret} does not exist in the query`);
+        console.log(`${name} does not exist in the query`);
       }
       return ret;
     }

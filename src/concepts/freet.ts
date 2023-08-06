@@ -1,6 +1,5 @@
 import ConceptDb, { ConceptBase } from "../conceptDb";
 import ConceptRouter, { HttpError, Session } from "../conceptRouter";
-import { NextFunction, Request, Response } from "express";
 
 interface Freet extends ConceptBase {
   author: string;
@@ -18,14 +17,14 @@ class FreetValidators {
 const freetDb = new ConceptDb<Freet>("freet");
 const freet = new ConceptRouter<Freet>(freetDb);
 
-freet.defineCreateAction({ 'validate': [FreetValidators.isOwner] });
+freet.defineCreateAction({ 'validate': [] });
 freet.defineDeleteAction({ 'validate': [FreetValidators.isOwner] });
-freet.defineUpdateAction({ 'validate': [FreetValidators.isOwner] });
+freet.defineUpdateAction({ 'validate': [] });
 freet.defineReadAction();
 
 freet.router.get("/", ...freet.handlers("read"));
 freet.router.post("/", ...freet.handlers("create"));
-freet.router.patch("/", ...freet.handlers("update"));
-freet.router.delete("/", ...freet.handlers("delete"));
+freet.router.patch("/:_id", ...freet.handlers("update"));
+freet.router.delete("/:_id", ...freet.handlers("delete"));
 
 export default freet;

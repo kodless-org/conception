@@ -60,7 +60,7 @@ export default class ConceptDb<Schema extends ConceptBase> {
     return await this.collection.updateOne(filter, { $set: update }, options);
   }
 
-  async updateOneById(_id: ObjectId, update: Partial<Schema>, options?: FindOneAndUpdateOptions): Promise<UpdateResult<Schema>> {
+  async updateOneById(_id: ObjectId | string, update: Partial<Schema>, options?: FindOneAndUpdateOptions): Promise<UpdateResult<Schema>> {
     update.dateUpdated = new Date();
     return await this.collection.updateOne({ _id: new ObjectId(_id) } as Filter<Schema>, { $set: update }, options);
   }

@@ -1,5 +1,4 @@
 import { HttpError, Session } from "./conceptRouter";
-import { Request, Response, NextFunction } from "express";
 
 export class Validators {
   static loggedOut(session: Session) {
