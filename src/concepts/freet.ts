@@ -9,24 +9,28 @@ interface Freet extends ConceptBase {
   content: string;
 }
 
-class FreetDb extends ConceptDb<Freet> {
-  async getAuthorFreets(name: string): Promise<Freet[]> {
-    return await this.readMany({author: name});
-  }
-}
-
 class FreetValidators {
   static async isOwner(req: Request, res: Response, next: NextFunction) {
     const freet = req.body.document as Freet;
     if (freet.author !== req.session.user?.username) {
-      
+      res.status(401).json({msg: "You don't own this freet!"});
+      return;
     }
+    next();
   }
 }
 
-const freet = new ConceptRouter<Freet, FreetDb>(new FreetDb("freet"));
+const freetDb = new ConceptDb<Freet>("freet");
+const freet = new ConceptRouter<Freet>(freetDb);
 
-freet.defineCreateAction({'validate': [Validators.loggedOut]});
-// freet.defineDeleteAction({'validate': []});
+freet.defineCreateAction({'validate': [FreetValidators.isOwner]});
+freet.defineDeleteAction({'validate': [FreetValidators.isOwner]});
+freet.defineUpdateAction({'validate': [FreetValidators.isOwner]});
+freet.defineReadAction();
+
+freet.router.get("/", ...freet.handlers("read"));
+freet.router.post("/", ...freet.handlers("create"));
+freet.router.patch("/", ...freet.handlers("update"));
+freet.router.delete("/", ...freet.handlers("delete"));
 
 export default freet;
