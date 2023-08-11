@@ -1,138 +1,34 @@
-import express from "express";
-import { RequestHandler } from "express";
-import { ObjectId, Filter } from "mongodb";
-import ConceptDb, { ConceptBase } from "./conceptDb";
-import { makeRoute, makeValidator } from "./decorators";
-import { SessionData } from "express-session";
+import express, { RequestHandler } from "express";
 
-export type Validator = RequestHandler;
-export type Action = Function;
+import Concept, { Action } from "./concept";
+import ConceptDb, { type ConceptBase } from "./conceptDb";
+import { makeRoute, makeValidator } from "./utils";
 
-export type Session = Partial<SessionData>;
+type HttpMethod = 'all' | 'get' | 'post' | 'put' | 'delete' | 'patch' | 'options' | 'head';
 
-export type ActionOptions = {
-  'validate'?: Function[],
-};
-
-export class HttpError extends Error {
-  constructor(public readonly code: number, public readonly message: string) {
-    super(message);
-    this.code = code;
-  }
-}
-
-export default class ConceptRouter<Schema extends ConceptBase, Db extends ConceptDb<Schema> = ConceptDb<Schema>> {
-  public readonly name: string;
+export class ConceptRouter<Schema extends ConceptBase, Db extends ConceptDb<Schema> = ConceptDb<Schema>> {
   public readonly router = express.Router();
-  private readonly actions: Record<string, RequestHandler> = {};
-  private readonly options: Record<string, ActionOptions> = {};
-  private readonly syncs: Record<string, Action[]> = {};
+  constructor(private readonly concept: Concept<Schema, Db>) { }
 
-  constructor(public readonly db: Db) {
-    this.name = db.name;
+  get name() {
+    return this.concept.name;
   }
 
-  public action(name: string): Action {
-    if (!(name in this.actions)) {
-      throw new Error(`Action ${name} does not exist in ${this.name} concept!`);
-    }
-    return this.actions[name];
+  private handlers(action: Action): RequestHandler[] {
+    return [...action.validators.map(makeValidator), makeRoute(action.action)];
   }
 
-  public defineAction(name: string, action: Action, options?: ActionOptions): void {
-    if (name in this.actions) {
-      throw new Error(`Action ${name} already defined in ${this.name} concept!`);
-    }
-    this.actions[name] = makeRoute(action);
-    if (options) this.options[name] = options;
+  private route(method: HttpMethod, path: string, name: string) {
+    const action = this.concept.action(name);
+    this.router[method](path, this.handlers(action));
   }
 
-  public sync(name: string, action: Action): void {
-    if (!(name in this.syncs)) this.syncs[name] = [];
-    this.syncs[name].push(action);
-  }
-
-  public handlers(name: string): RequestHandler[] {
-    if (!(name in this.actions)) {
-      throw new Error(`Action ${name} is not defined!`);
-    }
-    const handlers = [];
-    if (name in this.options) {
-      handlers.push(...this.options[name].validate?.map(makeValidator) || []);
-    }
-    handlers.push(this.actions[name]);
-    return handlers;
-  }
-
-  /**
-   * Defines action "create":
-   * 
-   * @matches
-   *  - `req.document`: Document to create.
-   * @affects
-   *  - Create the given document.
-   * @returns JSON with following fields:
-   *  - `document`: Created document, including its `_id` field.
-   */
-  public defineCreateAction(options?: ActionOptions) {
-    this.defineAction('create', async (document: Schema) => {
-      const _id = (await this.db.createOne(document)).insertedId;
-      return { document: { ...document, _id } };
-    }, options);
-  }
-
-  /**
-   * Defines action "read":
-   * 
-   * @requires
-   *  - `req.query`: Filter for documents to read (@see https://www.mongodb.com/docs/drivers/node/current/fundamentals/crud/query-document/#specify-a-query)
-   * @affects Nothing.
-   * @returns JSON with following fields:
-   *  - `documents`: All matching documents sorted in order of `dateUpdated` (newest first).
-   */
-  public defineReadAction(options?: ActionOptions) {
-    this.defineAction('read', async (query: Filter<Schema>) => {
-      const documents = await this.db.readMany(query, {
-        'sort': { dateUpdated: -1 }
-      });
-      return { documents };
-    }, options);
-  }
-
-  /**
-   * Defines action "update":
-   * 
-   * @requires
-   *  - `req.params._id`: ID of the document to update
-   *  - `req.body.partialDocument`: Patch to the document.
-   * @affects
-   *  - Update fields in `req.body.partialDocument` in document with id `req.params._id`
-   *    with given new values.
-   * @returns JSON with following fields:
-   *  - `document`: Updated document.
-   */
-  public defineUpdateAction(options?: ActionOptions) {
-    this.defineAction('update', async (_id: string, update: Partial<Schema>) => {
-      const id = new ObjectId(_id);
-      await this.db.updateOneById(id, update);
-      return { document: await this.db.readOneById(id) };
-    }, options);
-  }
-
-  /**
-   * Defines action "delete":
-   * 
-   * @requires
-   *  - `req.params._id`: ID of the document to delete
-   * @affects
-   *  - Delete document with given id.
-   * @returns JSON with following fields:
-   *  - `document`: Deleted document or null if it was not found.
-   */
-  public defineDeleteAction(options?: ActionOptions) {
-    this.defineAction('delete', async (_id: string) => {
-      const id = new ObjectId(_id);
-      return { document: await this.db.popOneById(id) };
-    }, options);
-  }
+  public all(path: string, name: string) { this.route('all', path, name) }
+  public get(path: string, name: string) { this.route('get', path, name) }
+  public post(path: string, name: string) { this.route('post', path, name) }
+  public put(path: string, name: string) { this.route('put', path, name) }
+  public delete(path: string, name: string) { this.route('delete', path, name) }
+  public patch(path: string, name: string) { this.route('patch', path, name) }
+  public options(path: string, name: string) { this.route('options', path, name) }
+  public head(path: string, name: string) { this.route('head', path, name) }
 }

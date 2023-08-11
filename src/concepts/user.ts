@@ -1,14 +1,14 @@
 import ConceptDb, { ConceptBase } from "../conceptDb";
-import ConceptRouter, {HttpError, type Session} from "../conceptRouter";
+import Concept, { HttpError, type Session } from "../concept";
 import { Validators } from "../utils";
 
-interface User extends ConceptBase {
+export interface User extends ConceptBase {
   username: string;
   password: string;
   profilePictureUrl?: string;
 }
 
-class UserActions {
+export class UserActions {
   static async readSafe(username?: string) {
     const users = (await userDb.readMany(username ? { username } : {})).map(user => {
       const { password, ...rest } = user; // remove password
@@ -20,7 +20,7 @@ class UserActions {
   static async logIn(document: User, session: Session) {
     const user = await userDb.readOne({ username: document.username, password: document.password });
     if (!user) {
-      return { msg: "Username or password is incorrect." };
+      throw new HttpError(403, "Username or password is incorrect.");
     }
     session.user = { _id: user._id, username: user.username };
     return { msg: "Successfully logged in." };
@@ -52,20 +52,13 @@ class UserValidators {
 }
 
 const userDb = new ConceptDb<User>("user");
-const user = new ConceptRouter<User>(userDb);
+const user = new Concept<User>(userDb);
 
-user.defineCreateAction({ 'validate': [Validators.loggedOut, UserValidators.canCreate] });
+user.defineAction("create", user.utilActions.create, [Validators.loggedOut, UserValidators.canCreate]);
 user.defineAction("readSafe", UserActions.readSafe);
-user.defineAction("login", UserActions.logIn, { 'validate': [Validators.loggedOut] });
-user.defineAction("logout", UserActions.logIn, { 'validate': [Validators.loggedIn] });
-user.defineAction("update", UserActions.update, { 'validate': [Validators.loggedIn, UserValidators.canCreate] });
-user.defineAction("delete", UserActions.delete, { 'validate': [Validators.loggedIn] });
-
-user.router.get("/", ...user.handlers("readSafe"));
-user.router.post("/", ...user.handlers("create"));
-user.router.patch("/", ...user.handlers("update"));
-user.router.delete("/", ...user.handlers("delete"));
-user.router.post("/login", ...user.handlers("login"));
-user.router.post("/logout", ...user.handlers("logout"));
+user.defineAction("login", UserActions.logIn, [Validators.loggedOut]);
+user.defineAction("logout", UserActions.logIn, [Validators.loggedIn]);
+user.defineAction("update", UserActions.update, [Validators.loggedIn, UserValidators.canCreate]);
+user.defineAction("delete", UserActions.delete, [Validators.loggedIn]);
 
 export default user;
