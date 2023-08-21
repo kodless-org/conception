@@ -4,8 +4,7 @@ import cors from "cors";
 import session from 'express-session';
 
 // Import your concept routers here.
-import { userRouter, freetRouter } from "./routes";
-import syncRouter from "./syncRouter";
+import { userRouter, freetRouter, syncRouter } from "./routes";
 
 const app = express();
 const PORT = process.env.PORT || 3000;

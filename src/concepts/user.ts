@@ -55,6 +55,7 @@ const userDb = new ConceptDb<User>("user");
 const user = new Concept<User>(userDb);
 
 user.defineAction("create", user.utilActions.create, [Validators.loggedOut, UserValidators.canCreate]);
+// TODO: user.create(...)
 user.defineAction("readSafe", UserActions.readSafe);
 user.defineAction("login", UserActions.logIn, [Validators.loggedOut]);
 user.defineAction("logout", UserActions.logIn, [Validators.loggedIn]);
