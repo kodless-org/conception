@@ -1,7 +1,7 @@
 import { Router } from "./router";
 
 import user, { User } from "./concepts/user";
-import freet, { Freet } from "./concepts/freet";
+import freet from "./concepts/freet";
 import { Session } from "./concept";
 
 export const userRouter = new Router("user", user);
@@ -22,18 +22,12 @@ syncRouter.post("/logout", logout);
 
 async function login(user: User, session: Session) {
   const u = await user.logIn(user, session);
-  const f = await freet.create({ author: session.user?.username, content: "Hi, I logged in!" } as Freet, session);
+  const f = await freet.create("Hi, I logged in!", session);
   return { msg: "Logged in and freeted!", user: u, freet: f };
 }
 
 async function logout(session: Session) {
   const u = user.logOut(session);
-  const f = await freet.create(
-    {
-      author: session.user?.username,
-      content: "Bye bye, logging off!",
-    } as Freet,
-    session,
-  );
+  const f = await freet.create("Bye bye, logging off!", session);
   return { msg: "Logged out and freeted!", user: u, freet: f };
 }

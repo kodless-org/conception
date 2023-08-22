@@ -5,15 +5,14 @@ import Concept, { HttpError, Session } from "../concept";
 import { Validators } from "../utils";
 
 export interface Freet extends ConceptBase {
-  author: string;
+  authorId: string;
   content: string;
 }
 
 class FreetConcept extends Concept<{ freets: Freet }> {
-  async create(freet: Freet, session: Session) {
-    await this.isOwner(freet, session);
-
-    const _id = (await this.db.freets.createOne(freet)).insertedId;
+  async create(content: string, session: Session) {
+    Validators.isLoggedIn(session);
+    const _id = (await this.db.freets.createOne({ authorId: session.user?.username, content } as Freet)).insertedId;
     return { freet: { ...freet, _id } };
   }
 
@@ -26,7 +25,7 @@ class FreetConcept extends Concept<{ freets: Freet }> {
 
   async update(_id: string, update: Partial<Freet>, session: Session) {
     Validators.isLoggedIn(session);
-    if (update.author !== undefined && update.author !== session.user?.username) {
+    if (update.authorId !== undefined && update.authorId !== session.user?.username) {
       throw new HttpError(403, "You cannot update other's freets!");
     }
 
@@ -38,7 +37,7 @@ class FreetConcept extends Concept<{ freets: Freet }> {
   async delete(_id: string, session: Session) {
     Validators.isLoggedIn(session);
     const freet = await this.db.freets.readOneById(new ObjectId(_id));
-    if (!freet || !freet?.author) {
+    if (!freet || !freet?.authorId) {
       throw new HttpError(403, "Not allowed to delete this freet.");
     }
 
@@ -48,7 +47,7 @@ class FreetConcept extends Concept<{ freets: Freet }> {
 
   async isOwner(freet: Freet, session: Session) {
     Validators.isLoggedIn(session);
-    if (freet.author !== session.user?.username) {
+    if (freet.authorId !== session.user?.username) {
       throw new HttpError(401, "You don't own this freet!");
     }
   }
