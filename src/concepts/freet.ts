@@ -1,25 +1,59 @@
 import ConceptDb, { ConceptBase } from "../conceptDb";
-import Concept, { HttpError, Session } from "../concept";
+import Concept, { HttpError, type Session } from "../concept";
+import { Filter, ObjectId } from "mongodb";
+import { Validators } from "utils";
 
 export interface Freet extends ConceptBase {
   author: string;
   content: string;
 }
 
-export class FreetValidators {
-  static async isOwner(document: Freet, session: Session) {
-    if (document.author !== session.user?.username) {
+class FreetConcept extends Concept<{ freets: Freet }> {
+  async create(freet: Freet, session: Session) {
+    this.isOwner(freet, session);
+
+    const _id = (await this.db.freets.createOne(freet)).insertedId;
+    return { freet: { ...freet, _id } };
+  }
+
+  async read(query: Filter<Freet>) {
+    const freets = await this.db.freets.readMany(query, {
+      'sort': { dateUpdated: -1 }
+    });
+    return { freets };
+  }
+
+  async update(_id: string, update: Partial<Freet>, session: Session) {
+    Validators.isLoggedIn(session);
+    if (update.author !== undefined && update.author !== session.user?.username) {
+      throw new HttpError(403, "You cannot update other's freets!");
+    }
+
+    const id = new ObjectId(_id);
+    await this.db.freets.updateOneById(id, update);
+    return { freet: await this.db.freets.readOneById(id) };
+  }
+
+  async delete(_id: string) {
+    const freet = await this.db.freets.readOneById(new ObjectId(_id));
+    if (!freet || !freet?.author) {
+      throw new HttpError(403, "Not allowed to delete this freet.");
+    }
+
+    await this.db.freets.deleteOneById(freet._id);
+    return { freet };
+  }
+
+  async isOwner(freet: Freet, session: Session) {
+    if (freet.author !== session.user?.username) {
       throw new HttpError(401, "You don't own this freet!");
     }
   }
 }
 
-const freetDb = new ConceptDb<Freet>("freet");
-const freet = new Concept<Freet>(freetDb);
+const freet = new FreetConcept(
+  { freets: new ConceptDb<Freet>("freets") }
+);
 
-freet.defineAction("create", freet.utilActions.create, [FreetValidators.isOwner]);
-freet.defineAction("delete", freet.utilActions.delete, [FreetValidators.isOwner]);
-freet.defineAction("update", freet.utilActions.update, [FreetValidators.isOwner]);
-freet.defineAction("read", freet.utilActions.read);
 
 export default freet;

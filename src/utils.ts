@@ -2,13 +2,13 @@ import { Request, Response, NextFunction, RequestHandler } from "express";
 import { HttpError, Session } from "./concept";
 
 export class Validators {
-  static loggedOut(session: Session) {
+  static isLoggedOut(session: Session) {
     if (session.user) {
       throw new HttpError(401, "You need to be logged out!");
     }
   }
 
-  static loggedIn(session: Session) {
+  static isLoggedIn(session: Session) {
     if (!session.user) {
       throw new HttpError(401, "You need to be logged in!");
     }
@@ -20,7 +20,7 @@ export function getParamNames(f: Function) {
   .map((param: string) => param.split("=")[0].trim()); // remove default values and whitespaces
 }
 
-export function makeRoute(f: Function, isValidator: boolean = false): RequestHandler {
+export function makeRoute(f: Function, skip = false): RequestHandler {
   return async (req: Request, res: Response, next: NextFunction) => {
     const reqMap = (name: string) => {
       if (name === "session" || name == "param" || name == "query" || name == "body") {
@@ -47,16 +47,16 @@ export function makeRoute(f: Function, isValidator: boolean = false): RequestHan
       return;
     }
 
-    if (isValidator) {
-      next(); // do not send result, go to the next step
+    if (skip) {
+      next(); // do not send result, go to the next middleware
     } else {
       res.json(result);
     }
   }
 }
 
-export function makeValidator(f: Function): RequestHandler {
-  return async (req: Request, res: Response, next: NextFunction) => {
-    makeRoute(f, true)(req, res, next);
-  };
-}
+// export function makeValidator(f: Function): RequestHandler {
+//   return async (req: Request, res: Response, next: NextFunction) => {
+//     makeRoute(f, true)(req, res, next);
+//   };
+// }

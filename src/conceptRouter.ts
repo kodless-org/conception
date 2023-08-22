@@ -1,34 +1,23 @@
-import express, { RequestHandler } from "express";
+import express from "express";
 
-import Concept, { Action } from "./concept";
-import ConceptDb, { type ConceptBase } from "./conceptDb";
-import { makeRoute, makeValidator } from "./utils";
+import { makeRoute } from "./utils";
 
 type HttpMethod = 'all' | 'get' | 'post' | 'put' | 'delete' | 'patch' | 'options' | 'head';
 
-export class ConceptRouter<Schema extends ConceptBase, Db extends ConceptDb<Schema> = ConceptDb<Schema>> {
+export class ConceptRouter {
   public readonly router = express.Router();
-  constructor(private readonly concept: Concept<Schema, Db>) { }
+  constructor(public readonly name: string) {}
 
-  get name() {
-    return this.concept.name;
+  private route(method: HttpMethod, path: string, action: Function) {
+    this.router[method](path, makeRoute(action));
   }
 
-  private handlers(action: Action): RequestHandler[] {
-    return [...action.validators.map(makeValidator), makeRoute(action.action)];
-  }
-
-  private route(method: HttpMethod, path: string, name: string) {
-    const action = this.concept.action(name);
-    this.router[method](path, this.handlers(action));
-  }
-
-  public all(path: string, name: string) { this.route('all', path, name) }
-  public get(path: string, name: string) { this.route('get', path, name) }
-  public post(path: string, name: string) { this.route('post', path, name) }
-  public put(path: string, name: string) { this.route('put', path, name) }
-  public delete(path: string, name: string) { this.route('delete', path, name) }
-  public patch(path: string, name: string) { this.route('patch', path, name) }
-  public options(path: string, name: string) { this.route('options', path, name) }
-  public head(path: string, name: string) { this.route('head', path, name) }
+  public all(path: string, action: Function) { this.route('all', path, action) }
+  public get(path: string, action: Function) { this.route('get', path, action) }
+  public post(path: string, action: Function) { this.route('post', path, action) }
+  public put(path: string, action: Function) { this.route('put', path, action) }
+  public delete(path: string, action: Function) { this.route('delete', path, action) }
+  public patch(path: string, action: Function) { this.route('patch', path, action) }
+  public options(path: string, action: Function) { this.route('options', path, action) }
+  public head(path: string, action: Function) { this.route('head', path, action) }
 }

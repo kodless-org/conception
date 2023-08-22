@@ -8,58 +8,63 @@ export interface User extends ConceptBase {
   profilePictureUrl?: string;
 }
 
-export class UserActions {
-  static async readSafe(username?: string) {
-    const users = (await userDb.readMany(username ? { username } : {})).map(user => {
+class UserConcept extends Concept<{ users: User }> {
+  async create(user: User, session: Session) {
+    Validators.isLoggedOut(session);
+    this.canCreate(user);
+
+    const _id = (await this.db.users.createOne(user)).insertedId;
+    return { user: { ...user, _id } };
+  }
+
+  async readSafe(username?: string) {
+    const users = (await this.db.users.readMany(username ? { username } : {})).map(user => {
       const { password, ...rest } = user; // remove password
       return rest;
     });
-    return { documents: users };
+    return { users: users };
   }
 
-  static async logIn(document: User, session: Session) {
-    const user = await userDb.readOne({ username: document.username, password: document.password });
-    if (!user) {
+  async logIn(user: User, session: Session) {
+    Validators.isLoggedOut(session);
+
+    const user_ = await this.db.users.readOne({ username: user.username, password: user.password });
+    if (!user_) {
       throw new HttpError(403, "Username or password is incorrect.");
     }
-    session.user = { _id: user._id, username: user.username };
+    session.user = { _id: user_._id, username: user_.username };
     return { msg: "Successfully logged in." };
   }
 
-  static logOut(session: Session) {
+  logOut(session: Session) {
+    Validators.isLoggedIn(session);
     session.user = undefined;
     return { msg: "Successfully logged out." };
   }
 
-  static async update(document: Partial<User>, session: Session) {
-    await userDb.updateOneById(session.user!._id, document);
+  async update(user: Partial<User>, session: Session) {
+    Validators.isLoggedIn(session);
+    this.canCreate(user as User); // if `username` doesn't exist in `user`, it is fine
+    await this.db.users.updateOneById(session.user!._id, user);
     return { msg: "Updated user successfully!" };
   }
 
-  static async delete(session: Session) {
-    await userDb.deleteOneById(session.user!._id);
+  async delete(session: Session) {
+    Validators.isLoggedIn(session);
+    await this.db.users.deleteOneById(session.user!._id);
     session.user = undefined; // log out
     return { msg: "You deleted your account" };
   }
-}
 
-class UserValidators {
-  static async canCreate(document: User) {
-    if (await userDb.readOne({ username: document.username })) {
+  async canCreate(user: User) {
+    if (await this.db.users.readOne({ username: user.username })) {
       throw new HttpError(401, "User with this username already exists!");
     }
   }
 }
 
-const userDb = new ConceptDb<User>("user");
-const user = new Concept<User>(userDb);
-
-user.defineAction("create", user.utilActions.create, [Validators.loggedOut, UserValidators.canCreate]);
-// TODO: user.create(...)
-user.defineAction("readSafe", UserActions.readSafe);
-user.defineAction("login", UserActions.logIn, [Validators.loggedOut]);
-user.defineAction("logout", UserActions.logIn, [Validators.loggedIn]);
-user.defineAction("update", UserActions.update, [Validators.loggedIn, UserValidators.canCreate]);
-user.defineAction("delete", UserActions.delete, [Validators.loggedIn]);
+const user = new UserConcept(
+  { users: new ConceptDb<User>("users") }
+);
 
 export default user;
