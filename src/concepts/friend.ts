@@ -11,4 +11,8 @@ export interface FriendRequest extends ConceptBase {
   status: "pending" | "rejected" | "accepted";
 }
 
-// class FriendConcept extends Concept
+class FriendConcept extends Concept<{ friends: Friend; requests: FriendRequest }> {
+  async addFriend(otherId: string) {
+    console.log("AddFriend");
+  }
+}

@@ -1,8 +1,8 @@
 import { Router } from "./router";
 
-import user, { User } from "./concepts/user";
-import freet from "./concepts/freet";
 import { Session } from "./concept";
+import freet from "./concepts/freet";
+import user, { User } from "./concepts/user";
 
 export const userRouter = new Router("user", user);
 userRouter.get("/", user.readSafe);

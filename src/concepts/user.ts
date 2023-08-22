@@ -1,5 +1,5 @@
-import ConceptDb, { ConceptBase } from "../conceptDb";
 import Concept, { HttpError, Session } from "../concept";
+import ConceptDb, { ConceptBase } from "../conceptDb";
 import { Validators } from "../utils";
 
 export interface User extends ConceptBase {

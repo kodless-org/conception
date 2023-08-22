@@ -1,7 +1,7 @@
 import express, { Request, Response } from "express";
 
-import { getParamNames } from "./utils";
 import Concept, { HttpError } from "./concept";
+import { getParamNames } from "./utils";
 
 type HttpMethod = "all" | "get" | "post" | "put" | "delete" | "patch" | "options" | "head";
 

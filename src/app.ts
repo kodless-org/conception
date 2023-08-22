@@ -1,10 +1,10 @@
-import express from "express";
-import logger from "morgan";
 import cors from "cors";
+import express from "express";
 import session from "express-session";
+import logger from "morgan";
 
 // Import your concept routers here.
-import { userRouter, freetRouter, syncRouter } from "./routes";
+import { freetRouter, syncRouter, userRouter } from "./routes";
 
 const app = express();
 const PORT = process.env.PORT || 3000;
