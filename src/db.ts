@@ -12,10 +12,10 @@ const client = new MongoClient(mongoUri as string, {
     version: ServerApiVersion.v1,
     strict: true,
     deprecationErrors: true,
-  }
+  },
 });
 
-(async () => {
+void (async () => {
   try {
     await client.connect();
   } catch (e) {

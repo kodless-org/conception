@@ -1,5 +1,5 @@
 import ConceptDb, { ConceptBase } from "../conceptDb";
-import Concept, { HttpError, type Session } from "../concept";
+import Concept, { HttpError, Session } from "../concept";
 import { Validators } from "../utils";
 
 export interface User extends ConceptBase {
@@ -11,14 +11,15 @@ export interface User extends ConceptBase {
 class UserConcept extends Concept<{ users: User }> {
   async create(user: User, session: Session) {
     Validators.isLoggedOut(session);
-    this.canCreate(user);
+    await this.canCreate(user);
 
     const _id = (await this.db.users.createOne(user)).insertedId;
     return { user: { ...user, _id } };
   }
 
   async readSafe(username?: string) {
-    const users = (await this.db.users.readMany(username ? { username } : {})).map(user => {
+    const users = (await this.db.users.readMany(username ? { username } : {})).map((user) => {
+      // eslint-disable-next-line
       const { password, ...rest } = user; // remove password
       return rest;
     });
@@ -28,7 +29,10 @@ class UserConcept extends Concept<{ users: User }> {
   async logIn(user: User, session: Session) {
     Validators.isLoggedOut(session);
 
-    const user_ = await this.db.users.readOne({ username: user.username, password: user.password });
+    const user_ = await this.db.users.readOne({
+      username: user.username,
+      password: user.password,
+    });
     if (!user_) {
       throw new HttpError(403, "Username or password is incorrect.");
     }
@@ -44,7 +48,7 @@ class UserConcept extends Concept<{ users: User }> {
 
   async update(user: Partial<User>, session: Session) {
     Validators.isLoggedIn(session);
-    this.canCreate(user as User); // if `username` doesn't exist in `user`, it is fine
+    await this.isUserGood(user); // if `username` doesn't exist in `user`, it is fine
     await this.db.users.updateOneById(session.user!._id, user);
     return { msg: "Updated user successfully!" };
   }
@@ -57,14 +61,20 @@ class UserConcept extends Concept<{ users: User }> {
   }
 
   async canCreate(user: User) {
-    if (await this.db.users.readOne({ username: user.username })) {
+    if (!user.username || !user.password) {
+      throw new HttpError(400, "Username and password must be non-empty!");
+    }
+    await this.isUserGood(user);
+  }
+
+  async isUserGood(user: Partial<User>) {
+    // TODO: name better
+    if (user.username && (await this.db.users.readOne({ username: user.username }))) {
       throw new HttpError(401, "User with this username already exists!");
     }
   }
 }
 
-const user = new UserConcept(
-  { users: new ConceptDb<User>("users") }
-);
+const user = new UserConcept({ users: new ConceptDb<User>("users") });
 
 export default user;

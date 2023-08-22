@@ -2,10 +2,10 @@
   "compilerOptions": {
     "target": "ES6",
     "module": "CommonJS",
-    "moduleResolution": "Node",    
-    
+    "moduleResolution": "Node",
+
     "sourceMap": true,
-    "allowSyntheticDefaultImports" : true,
+    "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
     "strict": true,
@@ -16,8 +16,6 @@
     "baseUrl": "src/",
     "outDir": "dist/"
   },
-  "include": [
-    "src/**/*.ts",
-  ],
+  "include": ["src/**/*.ts"],
   "exclude": ["node_modules", ".vscode"]
 }

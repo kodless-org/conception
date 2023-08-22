@@ -1,9 +1,20 @@
 import {
-  Collection, Document,
+  Collection,
+  Document,
   Filter,
-  OptionalUnlessRequiredId, WithoutId,
-  FindOptions, BulkWriteOptions, DeleteOptions, FindOneAndUpdateOptions, CountDocumentsOptions,
-  InsertOneResult, InsertManyResult, DeleteResult, UpdateResult, ReplaceOptions, ObjectId
+  OptionalUnlessRequiredId,
+  WithoutId,
+  FindOptions,
+  BulkWriteOptions,
+  DeleteOptions,
+  FindOneAndUpdateOptions,
+  CountDocumentsOptions,
+  InsertOneResult,
+  InsertManyResult,
+  DeleteResult,
+  UpdateResult,
+  ReplaceOptions,
+  ObjectId,
 } from "mongodb";
 
 import db from "./db";
@@ -28,7 +39,7 @@ export default class ConceptDb<Schema extends ConceptBase> {
   }
 
   async createMany(items: Schema[], options?: BulkWriteOptions): Promise<InsertManyResult> {
-    items.forEach(item => {
+    items.forEach((item) => {
       item.dateCreated = new Date();
       item.dateUpdated = new Date();
     });

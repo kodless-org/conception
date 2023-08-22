@@ -5,7 +5,10 @@ import ConceptDb, { ConceptBase } from "./conceptDb";
 export type Session = Partial<SessionData>;
 
 export class HttpError extends Error {
-  constructor(public readonly code: number, public readonly message: string) {
+  constructor(
+    public readonly code: number,
+    public readonly message: string,
+  ) {
     super(message);
     this.code = code;
   }
