@@ -10,3 +10,5 @@ export interface FriendRequest extends ConceptBase {
   toId: string;
   status: "pending" | "rejected" | "accepted";
 }
+
+// class FriendConcept extends Concept
