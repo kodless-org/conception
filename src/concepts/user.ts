@@ -48,7 +48,7 @@ class UserConcept extends Concept<{ users: User }> {
 
   async update(user: Partial<User>, session: Session) {
     Validators.isLoggedIn(session);
-    await this.isUserGood(user); // if `username` doesn't exist in `user`, it is fine
+    await this.isUserGood(user);
     await this.db.users.updateOneById(session.user!._id, user);
     return { msg: "Updated user successfully!" };
   }
