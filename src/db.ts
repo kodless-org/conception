@@ -1,13 +1,11 @@
-import dotenv from "dotenv";
 import { MongoClient, ServerApiVersion } from "mongodb";
 
-dotenv.config({});
 const mongoUri = process.env.MONGO_SRV;
 if (!mongoUri) {
   throw new Error("Please add the MongoDB connection SRV as 'MONGO_SRV'");
 }
 
-const client = new MongoClient(mongoUri as string, {
+export const client = new MongoClient(mongoUri as string, {
   serverApi: {
     version: ServerApiVersion.v1,
     strict: true,

@@ -36,7 +36,7 @@ class UserConcept extends Concept<{ users: User }> {
     if (!user_) {
       throw new HttpError(403, "Username or password is incorrect.");
     }
-    session.user = { _id: user_._id, username: user_.username };
+    session.user = { _id: user_._id.toString(), username: user_.username };
     return { msg: "Successfully logged in." };
   }
 

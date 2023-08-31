@@ -1,14 +1,18 @@
 import cors from "cors";
+import dotenv from "dotenv";
 import express from "express";
 import session from "express-session";
 import logger from "morgan";
+
+// The following line sets up the environment variables before everything else.
+dotenv.config();
 
 import { connect } from "./db";
 
 // Import your concept routers here.
 import { freetRouter, friendRouter, syncRouter, userRouter } from "./routes";
 
-const app = express();
+export const app = express();
 const PORT = process.env.PORT || 3000;
 app.use(logger("dev"));
 
@@ -31,7 +35,7 @@ declare module "express-session" {
   export interface SessionData {
     // Keeping this data minimal since it will be sent in every request.
     user: {
-      _id: import("mongodb").ObjectId;
+      _id: string;
       username: string;
     };
   }

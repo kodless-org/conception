@@ -80,8 +80,8 @@ export default class ConceptDb<Schema extends ConceptBase> {
     return await this.collection.deleteOne(filter, options);
   }
 
-  async deleteOneById(_id: ObjectId, options?: DeleteOptions): Promise<DeleteResult> {
-    return await this.collection.deleteOne({ _id } as Filter<Schema>, options);
+  async deleteOneById(_id: ObjectId | string, options?: DeleteOptions): Promise<DeleteResult> {
+    return await this.collection.deleteOne({ _id: new ObjectId(_id) } as Filter<Schema>, options);
   }
 
   async deleteMany(filter: Filter<Schema>, options?: DeleteOptions): Promise<DeleteResult> {
