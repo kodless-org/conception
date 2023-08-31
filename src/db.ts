@@ -15,7 +15,7 @@ const client = new MongoClient(mongoUri as string, {
   },
 });
 
-void (async () => {
+export async function connect() {
   try {
     await client.connect();
   } catch (e) {
@@ -23,7 +23,8 @@ void (async () => {
   }
   await client.db("admin").command({ ping: 1 });
   console.log("You successfully connected to MongoDB!");
-})();
+};
 
+// connect() is called in app.ts
 const db = client.db("conception-db"); // Feel free to change db name!
 export default db;

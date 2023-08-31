@@ -3,6 +3,8 @@ import express from "express";
 import session from "express-session";
 import logger from "morgan";
 
+import { connect } from "./db";
+
 // Import your concept routers here.
 import { freetRouter, syncRouter, userRouter } from "./routes";
 
@@ -46,6 +48,8 @@ app.all("*", (req, res) => {
   });
 });
 
-app.listen(PORT, () => {
-  console.log("Started listening on port", PORT);
+connect().then(() => {
+  app.listen(PORT, () => {
+    console.log("Started listening on port", PORT);
+  });
 });
