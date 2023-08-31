@@ -27,3 +27,7 @@ For now, see [thoughts](https://github.com/BarishNamazov/conception/blob/main/th
 - [x] Make actions work with the contents of request directly rather than deal with `req` and `res`.
 
 - [ ] Optional: Implement singleton concept base (i.e., easy user has only one of that object).
+
+- [ ] Unit tests? Need to figure out how to set up Mongo or in-memory mock for that.
+
+- [ ] Simple frontend to test backend manually (or just Postman?).
