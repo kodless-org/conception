@@ -66,6 +66,7 @@ export class Router {
         }
       } catch (e: unknown) {
         const error = e as HttpError;
+        // TODO: this is a pretty bad error to send back
         res.status(error?.code ?? 500).json({ msg: error?.message ?? "Internal Server Error" });
         return;
       }

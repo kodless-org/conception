@@ -6,7 +6,7 @@ import logger from "morgan";
 import { connect } from "./db";
 
 // Import your concept routers here.
-import { freetRouter, syncRouter, userRouter } from "./routes";
+import { freetRouter, friendRouter, syncRouter, userRouter } from "./routes";
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -38,7 +38,7 @@ declare module "express-session" {
 }
 
 // Register your concept routers here.
-[userRouter, freetRouter].forEach((router) => app.use("/api/" + router.name, router.router));
+[userRouter, freetRouter, friendRouter].forEach((router) => app.use("/api/" + router.name, router.router));
 app.use("/api", syncRouter.router);
 
 // For all unrecognized requests, return a not found message.
@@ -48,7 +48,7 @@ app.all("*", (req, res) => {
   });
 });
 
-connect().then(() => {
+void connect().then(() => {
   app.listen(PORT, () => {
     console.log("Started listening on port", PORT);
   });

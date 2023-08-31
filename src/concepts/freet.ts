@@ -13,7 +13,7 @@ class FreetConcept extends Concept<{ freets: Freet }> {
   async create(content: string, session: Session) {
     Validators.isLoggedIn(session);
     const _id = (await this.db.freets.createOne({ authorId: session.user?.username, content } as Freet)).insertedId;
-    return { freet: { ...freet, _id } };
+    return { freet: { content, _id } };
   }
 
   async read(query: Filter<Freet>) {

@@ -23,7 +23,7 @@ export async function connect() {
   }
   await client.db("admin").command({ ping: 1 });
   console.log("You successfully connected to MongoDB!");
-};
+}
 
 // connect() is called in app.ts
 const db = client.db("conception-db"); // Feel free to change db name!

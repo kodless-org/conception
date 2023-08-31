@@ -32,13 +32,13 @@ export default class ConceptDb<Schema extends ConceptBase> {
     this.collection = db.collection(name);
   }
 
-  async createOne(item: Schema): Promise<InsertOneResult> {
+  async createOne(item: Partial<Schema>): Promise<InsertOneResult> {
     item.dateCreated = new Date();
     item.dateUpdated = new Date();
     return await this.collection.insertOne(item as OptionalUnlessRequiredId<Schema>);
   }
 
-  async createMany(items: Schema[], options?: BulkWriteOptions): Promise<InsertManyResult> {
+  async createMany(items: Partial<Schema>[], options?: BulkWriteOptions): Promise<InsertManyResult> {
     items.forEach((item) => {
       item.dateCreated = new Date();
       item.dateUpdated = new Date();
@@ -58,12 +58,12 @@ export default class ConceptDb<Schema extends ConceptBase> {
     return await this.collection.find<Schema>(filter, options).toArray();
   }
 
-  async replaceOne(filter: Filter<Schema>, item: WithoutId<Schema>, options?: ReplaceOptions): Promise<UpdateResult<Schema> | Document> {
-    return await this.collection.replaceOne(filter, item, options);
+  async replaceOne(filter: Filter<Schema>, item: Partial<Schema>, options?: ReplaceOptions): Promise<UpdateResult<Schema> | Document> {
+    return await this.collection.replaceOne(filter, item as WithoutId<Schema>, options);
   }
 
-  async replaceOneById(_id: ObjectId, item: WithoutId<Schema>, options?: ReplaceOptions): Promise<UpdateResult<Schema> | Document> {
-    return await this.collection.replaceOne({ _id } as Filter<Schema>, item, options);
+  async replaceOneById(_id: ObjectId, item: Partial<Schema>, options?: ReplaceOptions): Promise<UpdateResult<Schema> | Document> {
+    return await this.collection.replaceOne({ _id } as Filter<Schema>, item as WithoutId<Schema>, options);
   }
 
   async updateOne(filter: Filter<Schema>, update: Partial<Schema>, options?: FindOneAndUpdateOptions): Promise<UpdateResult<Schema>> {
