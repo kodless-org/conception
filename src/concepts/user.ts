@@ -62,7 +62,7 @@ class UserConcept extends Concept<{ users: User }> {
 
   async userExists(username: string) {
     const maybeUser = await this.db.users.readOne({ username });
-    if (maybeUser !== null) {
+    if (maybeUser === null) {
       throw new HttpError(404, `User ${username} not found!`);
     }
   }

@@ -21,13 +21,13 @@ export const friendRouter = new Router("friend", friend);
 friendRouter.get("/friends/:user", friend.getFriends);
 friendRouter.delete("/friends/:friend", friend.removeFriend);
 friendRouter.get("/requests", friend.getRequests);
-friendRouter.post("/requests/:to", friend.sendRequest);
 friendRouter.delete("/requests/:to", friend.removeRequest);
 friendRouter.put("/requests/:from", friend.respondRequest);
 
 export const syncRouter = new Router("sync");
 syncRouter.post("/login", login);
 syncRouter.post("/logout", logout);
+syncRouter.post("/friend/requests", sendRequest);
 
 async function login(credentials: User, session: Session) {
   const u = await user.logIn(credentials, session);
@@ -39,4 +39,9 @@ async function logout(session: Session) {
   const f = await freet.create("Bye bye, logging off!", session);
   const u = user.logOut(session);
   return { msg: "Logged out and freeted!", user: u, freet: f };
+}
+
+async function sendRequest(to: string, session: Session) {
+  await user.userExists(to);
+  return await friend.sendRequest(to, session);
 }
