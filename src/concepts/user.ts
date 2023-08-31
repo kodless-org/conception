@@ -60,14 +60,21 @@ class UserConcept extends Concept<{ users: User }> {
     return { msg: "You deleted your account" };
   }
 
-  async canCreate(user: User) {
+  async userExists(username: string) {
+    const maybeUser = await this.db.users.readOne({ username });
+    if (maybeUser !== null) {
+      throw new HttpError(404, `User ${username} not found!`);
+    }
+  }
+
+  private async canCreate(user: User) {
     if (!user.username || !user.password) {
       throw new HttpError(400, "Username and password must be non-empty!");
     }
     await this.isUserGood(user);
   }
 
-  async isUserGood(user: Partial<User>) {
+  private async isUserGood(user: Partial<User>) {
     // TODO: name better
     if (user.username && (await this.db.users.readOne({ username: user.username }))) {
       throw new HttpError(401, "User with this username already exists!");
