@@ -16,11 +16,11 @@ For now, see [thoughts](https://github.com/BarishNamazov/conception/blob/main/th
 
 - [x] Basic base for defining concepts and routers.
 
-- [X] Make very simple Fritter with Freet and User concepts.
+- [x] Make very simple Fritter with Freet and User concepts.
 
 - [ ] More examples of concepts under `src/concepts/`, making a simple app.
 
-- [X] Make methods work with direct method references rather than string names.
+- [x] Make methods work with direct method references rather than string names.
 
 - [x] Make actions work with the contents of request directly rather than deal with `req` and `res`.
 
