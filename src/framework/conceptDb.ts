@@ -17,15 +17,17 @@ import {
   WithoutId,
 } from "mongodb";
 
-import db from "./db";
+import db from "../db";
 
-export interface ConceptBase extends Document {
+export interface CollectionBase extends Document {
   _id: ObjectId;
   dateCreated: Date;
   dateUpdated: Date;
 }
 
-export default class ConceptDb<Schema extends ConceptBase> {
+export type WithoutBase<T extends CollectionBase> = Omit<T, keyof CollectionBase>;
+
+export default class ConceptDb<Schema extends CollectionBase> {
   protected readonly collection: Collection<Schema>;
 
   constructor(public readonly name: string) {
@@ -50,8 +52,8 @@ export default class ConceptDb<Schema extends ConceptBase> {
     return await this.collection.findOne<Schema>(filter, options);
   }
 
-  async readOneById(_id: ObjectId, options?: FindOptions): Promise<Schema | null> {
-    return await this.readOne({ _id } as Filter<Schema>, options);
+  async readOneById(_id: ObjectId | string, options?: FindOptions): Promise<Schema | null> {
+    return await this.readOne({ _id: new ObjectId(_id) } as Filter<Schema>, options);
   }
 
   async readMany(filter: Filter<Schema>, options?: FindOptions): Promise<Schema[]> {
@@ -62,8 +64,8 @@ export default class ConceptDb<Schema extends ConceptBase> {
     return await this.collection.replaceOne(filter, item as WithoutId<Schema>, options);
   }
 
-  async replaceOneById(_id: ObjectId, item: Partial<Schema>, options?: ReplaceOptions): Promise<UpdateResult<Schema> | Document> {
-    return await this.collection.replaceOne({ _id } as Filter<Schema>, item as WithoutId<Schema>, options);
+  async replaceOneById(_id: ObjectId | string, item: Partial<Schema>, options?: ReplaceOptions): Promise<UpdateResult<Schema> | Document> {
+    return await this.collection.replaceOne({ _id: new ObjectId(_id) } as Filter<Schema>, item as WithoutId<Schema>, options);
   }
 
   async updateOne(filter: Filter<Schema>, update: Partial<Schema>, options?: FindOneAndUpdateOptions): Promise<UpdateResult<Schema>> {
@@ -101,7 +103,7 @@ export default class ConceptDb<Schema extends ConceptBase> {
     return one;
   }
 
-  async popOneById(_id: ObjectId): Promise<Schema | null> {
-    return this.popOne({ _id } as Filter<Schema>);
+  async popOneById(_id: ObjectId | string): Promise<Schema | null> {
+    return this.popOne({ _id: new ObjectId(_id) } as Filter<Schema>);
   }
 }

@@ -30,17 +30,6 @@ app.use(
   }),
 );
 
-// This allows us to overload express session data type.
-declare module "express-session" {
-  export interface SessionData {
-    // Keeping this data minimal since it will be sent in every request.
-    user: {
-      _id: string;
-      username: string;
-    };
-  }
-}
-
 // Register your concept routers here.
 [userRouter, freetRouter, friendRouter].forEach((router) => app.use("/api/" + router.name, router.router));
 app.use("/api", syncRouter.router);

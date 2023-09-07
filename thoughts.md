@@ -50,3 +50,11 @@ Need to define a convention or allow both but cast? Is it even good idea to go w
 Not sure yet.
 
 ---
+
+### Concern
+
+`session` as an express param passed as whole is confusing.
+
+### Thoughts
+
+Make it a concept (Geoffrey).

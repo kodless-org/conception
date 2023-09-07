@@ -1,47 +1,83 @@
-import { Router } from "./router";
+import { Filter } from "mongodb";
 
-import { Session } from "./concept";
-import freet from "./concepts/freet";
-import friend from "./concepts/friend";
-import user, { User } from "./concepts/user";
+import { Router } from "./framework/router";
 
-export const userRouter = new Router("user", user);
-userRouter.get("/", user.readSafe);
-userRouter.post("/", user.create);
-userRouter.patch("/", user.update);
-userRouter.delete("/", user.delete);
+import freetManager, { Freet } from "./concepts/freet";
+import sessionManager, { Session } from "./concepts/session";
+import userManager, { User } from "./concepts/user";
 
-export const freetRouter = new Router("freet", freet);
-freetRouter.get("/", freet.read);
-freetRouter.post("/", freet.create);
-freetRouter.patch("/:_id", freet.update);
-freetRouter.delete("/:_id", freet.delete);
+export const userRouter = new Router("user");
 
-export const friendRouter = new Router("friend", friend);
-friendRouter.get("/friends/:user", friend.getFriends);
-friendRouter.delete("/friends/:friend", friend.removeFriend);
-friendRouter.get("/requests", friend.getRequests);
-friendRouter.delete("/requests/:to", friend.removeRequest);
-friendRouter.put("/requests/:from", friend.respondRequest);
+userRouter.get("/", async (username?: string) => {
+  return await userManager.getUsers(username);
+});
+
+userRouter.post("/", async (session: Session, user: User) => {
+  sessionManager.isLoggedOut(session);
+  return await userManager.create(user);
+});
+
+userRouter.patch("/", async (session: Session, update: Partial<User>) => {
+  const userId = sessionManager.getUser(session)._id;
+  return await userManager.update(userId, update);
+});
+
+userRouter.delete("/", async (session: Session) => {
+  const userId = sessionManager.getUser(session)._id;
+  return await userManager.delete(userId);
+});
+
+export const freetRouter = new Router("freet");
+
+freetRouter.get("/", async (query: Filter<Freet>) => {
+  return await freetManager.read(query);
+});
+
+// freetRouter.post("/", async (session: Session, freet: Freet) => {
+//   const userId = sessionManager.getUser(session)._id;
+//   return await freetManager.create(freet);
+// });
+// freetRouter.get("/", freetManager.read);
+// freetRouter.post("/", freetManager.create);
+// freetRouter.patch("/:_id", freetManager.update);
+// freetRouter.delete("/:_id", freetManager.delete);
+
+export const friendRouter = new Router("friend");
+// friendRouter.get("/friends/:user", friendManager.getFriends);
+// friendRouter.delete("/friends/:friend", friendManager.removeFriend);
+// friendRouter.get("/requests", friendManager.getRequests);
+// friendRouter.delete("/requests/:to", friendManager.removeRequest);
+// friendRouter.put("/requests/:from", friendManager.respondRequest);
 
 export const syncRouter = new Router("sync");
-syncRouter.post("/login", login);
-syncRouter.post("/logout", logout);
-syncRouter.post("/friend/requests", sendRequest);
+// syncRouter.post("/login", login);
+// syncRouter.post("/logout", logout);
+// syncRouter.post("/friend/requests", sendRequest);
 
-async function login(credentials: User, session: Session) {
-  const u = await user.logIn(credentials, session);
-  const f = await freet.create("Hi, I logged in!", session);
-  return { msg: "Logged in and freeted!", user: u, freet: f };
-}
+// async function login(credentials: User, session: Session) {
+//   const u = await userManager.logIn(credentials, session);
+//   const f = await freetManager.create("Hi, I logged in!", session);
+//   return { msg: "Logged in and freeted!", user: u, freet: f };
+// }
+// // MongoDb transaction
 
-async function logout(session: Session) {
-  const f = await freet.create("Bye bye, logging off!", session);
-  const u = user.logOut(session);
-  return { msg: "Logged out and freeted!", user: u, freet: f };
-}
+// // magic(f) {
+// //   start_transaction();
+// //   try {
+// //     result = f();
+// //   } finally{
+// //     end_transaction();
+// //   }
+// //   return result;
+// // }
 
-async function sendRequest(to: string, session: Session) {
-  await user.userExists(to);
-  return await friend.sendRequest(to, session);
-}
+// async function logout(session: Session) {
+//   const f = await freetManager.create("Bye bye, logging off!", session);
+//   const u = userManager.logOut(session);
+//   return { msg: "Logged out and freeted!", user: u, freet: f };
+// }
+
+// async function sendRequest(to: string, session: Session) {
+//   await userManager.userExists(to);
+//   return await friendManager.sendRequest(to, session);
+// }

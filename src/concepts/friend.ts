@@ -1,140 +1,128 @@
-import Concept, { HttpError, Session } from "../concept";
-import ConceptDb, { ConceptBase } from "../conceptDb";
-import { Validators } from "../utils";
+import Concept from "../framework/concept";
+import ConceptDb, { CollectionBase } from "../framework/conceptDb";
+import { NotAllowedError, NotFoundError } from "./errors";
 
-export interface Friend extends ConceptBase {
-  // usernames of friends for each friendship, in no specific order
-  friend1: string;
-  friend2: string;
+export interface Friend extends CollectionBase {
+  user1: string;
+  user2: string;
 }
 
-export interface FriendRequest extends ConceptBase {
-  // usernames of from and to
+export interface FriendRequest extends CollectionBase {
   from: string;
   to: string;
   status: "pending" | "rejected" | "accepted";
 }
 
 class FriendConcept extends Concept<{ friends: Friend; requests: FriendRequest }> {
-  async getRequests(session: Session) {
-    console.log(session);
-    Validators.isLoggedIn(session);
-    const username = session.user?.username ?? "";
+  async getRequests(userId: string) {
     return await this.db.requests.readMany({
-      $or: [{ from: username }, { to: username }],
+      $or: [{ from: userId }, { to: userId }],
     });
   }
 
-  async sendRequest(to: string, session: Session) {
-    Validators.isLoggedIn(session);
-    const username = session.user?.username ?? "";
-    await this.canSendRequest(username, to);
+  async sendRequest(from: string, to: string) {
+    await this.canSendRequest(from, to);
     await this.db.requests.createOne({
-      from: username,
+      from,
       to,
       status: "pending",
     });
     return { msg: "Sent request!" };
   }
 
-  async respondRequest(from: string, response: "accepted" | "rejected", session: Session) {
-    Validators.isLoggedIn(session);
-    const username = session.user?.username ?? "";
+  async respondRequest(from: string, to: string, response: "accepted" | "rejected") {
     const request = await this.db.requests.popOne({
       from,
-      to: username,
+      to,
       status: "pending",
     });
-    if (!request) {
-      throw new HttpError(401, `There was no pending request from ${from}!`);
+    if (request === null) {
+      throw new NotFoundError(`There was no pending request from ${from} to ${to}!`);
     }
     void this.db.requests.createOne({
       from,
-      to: username,
+      to,
       status: response,
     });
 
     // if accepted, add a new friend
     if (response === "accepted") {
-      void this.addFriend(username, from);
+      void this.addFriend(from, to);
     }
 
     return {
-      msg: "Responded!",
+      msg: `Responded with ${response}!`,
     };
   }
 
-  async removeRequest(to: string, session: Session) {
-    Validators.isLoggedIn(session);
-    const username = session.user?.username ?? "";
+  async removeRequest(from: string, to: string) {
     const request = await this.db.requests.popOne({
-      from: username,
+      from,
       to,
       status: "pending",
     });
     if (request === null) {
-      throw new HttpError(401, `No pending request existed to ${to}!`);
+      throw new NotFoundError(`No pending request existed from ${from} to ${to}!`);
     }
     return { msg: "Removed request!" };
   }
 
-  async removeFriend(friend: string, session: Session) {
-    Validators.isLoggedIn(session);
-    const username = session.user?.username ?? "";
+  async removeFriend(user: string, friend: string) {
     const friendship = await this.db.friends.popOne({
       $or: [
-        { friend1: username, friend2: friend },
-        { friend1: friend, friend2: username },
+        { user1: user, user2: friend },
+        { user1: friend, user2: user },
       ],
     });
     if (friendship === null) {
-      throw new HttpError(401, `You were not friends with ${friend}!`);
+      throw new NotFoundError(`${user} was not friends with ${friend}!`);
     }
     return { msg: "Unfriended!" };
   }
 
   async getFriends(user: string) {
     const friendships = await this.db.friends.readMany({
-      $or: [{ friend1: user }, { friend2: user }],
+      $or: [{ user1: user }, { user2: user }],
     });
-    return friendships.map((ship) => (ship.friend1 === user ? ship.friend2 : ship.friend1));
+    return friendships.map((friendship) => (friendship.user1 === user ? friendship.user2 : friendship.user1));
   }
 
-  private async addFriend(friend1: string, friend2: string) {
-    void this.db.friends.createOne({ friend1, friend2 });
+  private async addFriend(user1: string, user2: string) {
+    void this.db.friends.createOne({ user1, user2 });
   }
 
   private async isNotFriends(u1: string, u2: string) {
     const friendship = await this.db.friends.readOne({
       $or: [
-        { friend1: u1, friend2: u2 },
-        { friend1: u2, friend2: u1 },
+        { user1: u1, user2: u2 },
+        { user1: u2, user2: u1 },
       ],
     });
     if (friendship !== null) {
-      throw new HttpError(401, `${u1} and ${u2} users are already friends!`);
+      throw new NotAllowedError(`${u1} and ${u2} users are already friends!`);
     }
   }
 
   private async canSendRequest(u1: string, u2: string) {
     if (u1 === u2) {
-      throw new HttpError(400, "Yes, you are your friend!");
+      throw new NotAllowedError(":)");
     }
-    void this.isNotFriends(u1, u2);
-    // check if there is pending request from either of these users
+    await this.isNotFriends(u1, u2);
+    // check if there is pending request between these users
     const request = await this.db.requests.readOne({
       from: { $in: [u1, u2] },
+      to: { $in: [u1, u2] },
       status: "pending",
     });
-    if (request) {
-      throw new HttpError(401, `There is already a friend request between ${u1} and ${u2}!`);
+    if (request !== null) {
+      throw new NotAllowedError(`There is already a friend request between ${u1} and ${u2}!`);
     }
   }
 }
 
-const friend = new FriendConcept({
+const friendManager = new FriendConcept({
   friends: new ConceptDb<Friend>("friends"),
   requests: new ConceptDb<FriendRequest>("friendRequests"),
 });
 
-export default friend;
+export default friendManager;

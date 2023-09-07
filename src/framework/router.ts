@@ -1,6 +1,6 @@
 import express, { Request, Response } from "express";
 
-import Concept, { HttpError } from "./concept";
+import Concept from "./concept";
 import { getParamNames } from "./utils";
 
 type HttpMethod = "all" | "get" | "post" | "put" | "delete" | "patch" | "options" | "head";
@@ -64,10 +64,9 @@ export class Router {
         if (result instanceof Promise) {
           result = await result;
         }
-      } catch (e: unknown) {
-        const error = e as HttpError;
-        // TODO: this is a pretty bad error to send back
-        res.status(error?.code ?? 500).json({ msg: error?.message ?? "Internal Server Error" });
+        // eslint-disable-next-line
+      } catch (e: any) {
+        res.status(e.HTTP_CODE ?? 500).json({ msg: e.message ?? "Internal Server Error" });
         return;
       }
       res.json(result);

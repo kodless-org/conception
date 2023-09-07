@@ -13,6 +13,12 @@ export const client = new MongoClient(mongoUri as string, {
   },
 });
 
+export const DB_NAME = "conception-db"; // Feel free to change db name!
+
+/**
+ * Attempts to complete the connection to {@link client}.
+ * Called in `app.ts`.
+ */
 export async function connect() {
   try {
     await client.connect();
@@ -23,6 +29,5 @@ export async function connect() {
   console.log("You successfully connected to MongoDB!");
 }
 
-// connect() is called in app.ts
-const db = client.db("conception-db"); // Feel free to change db name!
+const db = client.db(DB_NAME);
 export default db;
