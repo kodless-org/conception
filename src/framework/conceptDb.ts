@@ -19,7 +19,7 @@ import {
 
 import db from "../db";
 
-export interface CollectionBase extends Document {
+export interface CollectionBase {
   _id: ObjectId;
   dateCreated: Date;
   dateUpdated: Date;
@@ -34,7 +34,18 @@ export default class ConceptDb<Schema extends CollectionBase> {
     this.collection = db.collection(name);
   }
 
+  /**
+   * This method removes "illegal" fields from an item
+   * so the client cannot fake them.
+   */
+  private sanitize(item: Partial<Schema>) {
+    delete item._id;
+    delete item.dateCreated;
+    delete item.dateUpdated;
+  }
+
   async createOne(item: Partial<Schema>): Promise<InsertOneResult> {
+    this.sanitize(item);
     item.dateCreated = new Date();
     item.dateUpdated = new Date();
     return await this.collection.insertOne(item as OptionalUnlessRequiredId<Schema>);
@@ -42,6 +53,7 @@ export default class ConceptDb<Schema extends CollectionBase> {
 
   async createMany(items: Partial<Schema>[], options?: BulkWriteOptions): Promise<InsertManyResult> {
     items.forEach((item) => {
+      this.sanitize(item);
       item.dateCreated = new Date();
       item.dateUpdated = new Date();
     });
@@ -61,19 +73,23 @@ export default class ConceptDb<Schema extends CollectionBase> {
   }
 
   async replaceOne(filter: Filter<Schema>, item: Partial<Schema>, options?: ReplaceOptions): Promise<UpdateResult<Schema> | Document> {
+    this.sanitize(item);
     return await this.collection.replaceOne(filter, item as WithoutId<Schema>, options);
   }
 
   async replaceOneById(_id: ObjectId | string, item: Partial<Schema>, options?: ReplaceOptions): Promise<UpdateResult<Schema> | Document> {
+    this.sanitize(item);
     return await this.collection.replaceOne({ _id: new ObjectId(_id) } as Filter<Schema>, item as WithoutId<Schema>, options);
   }
 
   async updateOne(filter: Filter<Schema>, update: Partial<Schema>, options?: FindOneAndUpdateOptions): Promise<UpdateResult<Schema>> {
+    this.sanitize(update);
     update.dateUpdated = new Date();
     return await this.collection.updateOne(filter, { $set: update }, options);
   }
 
   async updateOneById(_id: ObjectId | string, update: Partial<Schema>, options?: FindOneAndUpdateOptions): Promise<UpdateResult<Schema>> {
+    this.sanitize(update);
     update.dateUpdated = new Date();
     return await this.collection.updateOne({ _id: new ObjectId(_id) } as Filter<Schema>, { $set: update }, options);
   }
