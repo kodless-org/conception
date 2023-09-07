@@ -1,5 +1,5 @@
 import Concept from "../framework/concept";
-import ConceptDb, { CollectionBase } from "../framework/conceptDb";
+import ConceptDb, { CollectionBase, WithoutBase } from "../framework/conceptDb";
 import { BadValuesError, NotAllowedError, NotFoundError } from "./errors";
 
 export interface User extends CollectionBase {
@@ -8,12 +8,13 @@ export interface User extends CollectionBase {
   profilePictureUrl?: string;
 }
 
-class UserConcept extends Concept<{ users: User }> {
-  async create(user: User) {
-    await this.canCreate(user);
+export type PureUser = WithoutBase<User>;
 
+class UserConcept extends Concept<{ users: User }> {
+  async create(user: PureUser) {
+    await this.canCreate(user);
     const _id = (await this.db.users.createOne(user)).insertedId;
-    return { user: { ...user, _id } };
+    return { msg: "User created successfully!", user: { ...user, _id } };
   }
 
   async getUsers(username?: string) {
@@ -57,7 +58,7 @@ class UserConcept extends Concept<{ users: User }> {
     }
   }
 
-  private async canCreate(user: User) {
+  private async canCreate(user: PureUser) {
     if (!user.username || !user.password) {
       throw new BadValuesError("Username and password must be non-empty!");
     }

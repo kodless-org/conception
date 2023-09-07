@@ -20,6 +20,7 @@ class SessionConcept extends Concept<{}> {
   setUser(session: Session, user: UserSession) {
     session.user = user;
   }
+
   getUser(session: Session) {
     this.isLoggedIn(session);
     return session.user!;
