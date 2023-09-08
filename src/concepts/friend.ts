@@ -22,45 +22,27 @@ class FriendConcept extends Concept<{ friends: Friend; requests: FriendRequest }
 
   async sendRequest(from: string, to: string) {
     await this.canSendRequest(from, to);
-    await this.db.requests.createOne({
-      from,
-      to,
-      status: "pending",
-    });
+    await this.db.requests.createOne({ from, to, status: "pending" });
     return { msg: "Sent request!" };
   }
 
   async respondRequest(from: string, to: string, response: "accepted" | "rejected") {
-    const request = await this.db.requests.popOne({
-      from,
-      to,
-      status: "pending",
-    });
+    const request = await this.db.requests.popOne({ from, to, status: "pending" });
     if (request === null) {
       throw new NotFoundError(`There was no pending request from ${from} to ${to}!`);
     }
-    void this.db.requests.createOne({
-      from,
-      to,
-      status: response,
-    });
+    void this.db.requests.createOne({ from, to, status: response });
 
     // if accepted, add a new friend
     if (response === "accepted") {
       void this.addFriend(from, to);
     }
 
-    return {
-      msg: `Responded with ${response}!`,
-    };
+    return { msg: `Responded with ${response}!` };
   }
 
   async removeRequest(from: string, to: string) {
-    const request = await this.db.requests.popOne({
-      from,
-      to,
-      status: "pending",
-    });
+    const request = await this.db.requests.popOne({ from, to, status: "pending" });
     if (request === null) {
       throw new NotFoundError(`No pending request existed from ${from} to ${to}!`);
     }
