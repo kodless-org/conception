@@ -1,14 +1,12 @@
 import { Filter } from "mongodb";
 
-import { Router } from "./framework/router";
+import { HttpMethod, Router } from "./framework/router";
 
 import { BadValuesError } from "./concepts/errors";
 import freetManager, { Freet, PureFreet } from "./concepts/freet";
 import friendManager from "./concepts/friend";
 import sessionManager, { Session } from "./concepts/session";
 import userManager, { User } from "./concepts/user";
-
-// TODO: try converting all of these to methods with decorators
 
 class Routes {
   @Router.get("/users")
@@ -123,28 +121,33 @@ class Routes {
   }
 }
 
-// Do not edit code below this line.
-const router = new Router();
-const routes = new Routes();
+function getExpressRouter() {
+  const router = new Router();
+  const routes = new Routes();
 
-// Get all methods in the Routes class.
-const endpoints = Object.getOwnPropertyNames(Object.getPrototypeOf(routes));
+  // Get all methods in the Routes class (e.g., getUsers, createUser, etc).
+  const endpoints = Object.getOwnPropertyNames(Object.getPrototypeOf(routes));
 
-endpoints.forEach((endpoint) => {
-  // Get the method and path metadata from the routes object.
-  // These come from decorators in the Routes class.
-  const method = Reflect.getMetadata("method", routes, endpoint) as string;
-  const path = Reflect.getMetadata("path", routes, endpoint) as string;
+  // Register the methods as routes in `router`.
+  for (const endpoint of endpoints) {
+    // Get the method and path metadata from the routes object.
+    // These come from decorators in the Routes class.
+    const method = Reflect.getMetadata("method", routes, endpoint) as HttpMethod;
+    const path = Reflect.getMetadata("path", routes, endpoint) as string;
 
-  // The ugly cast is because TypeScript doesn't know that router[method] is a function.
-  const caller = (router as unknown as Record<string, Function>)[method];
-  const handler = (routes as unknown as Record<string, Function>)[endpoint];
+    // Skip if the method or path is not defined (e.g., when endpoint is the constructor)
+    if (!method || !path) {
+      continue;
+    }
 
-  // Call the method on the router with the path and handler.
-  if (caller) {
-    caller.call(router, path, handler);
+    // The ugly cast is because TypeScript doesn't know that `routes[endpoint]` is a function.
+    const action = (routes as unknown as Record<string, Function>)[endpoint];
+
+    router.route(method, path, action);
   }
-});
+
+  return router.expressRouter;
+}
 
 // Export the Express router instance.
-export default router.router;
+export default getExpressRouter();

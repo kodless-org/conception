@@ -4,17 +4,21 @@ import "reflect-metadata";
 import Concept from "./concept";
 import { getParamNames } from "./utils";
 
-type HttpMethod = "all" | "get" | "post" | "put" | "delete" | "patch" | "options" | "head";
+export type HttpMethod = "all" | "get" | "post" | "put" | "delete" | "patch" | "options" | "head";
 
+/**
+ * This class an abstraction over the express router, used to decorate methods in your concept classes.
+ * It will automatically convert actions into express handlers.
+ */
 export class Router {
-  public readonly router = express.Router();
+  public readonly expressRouter = express.Router();
 
   constructor(
     private readonly ctx: Concept<any> | null = null, // eslint-disable-line
   ) {}
 
-  private route(method: HttpMethod, path: string, action: Function) {
-    this.router[method](path, this.makeRoute(action));
+  public route(method: HttpMethod, path: string, action: Function) {
+    this.expressRouter[method](path, this.makeRoute(action));
   }
 
   public all(path: string, action: Function) {

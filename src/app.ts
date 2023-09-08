@@ -7,9 +7,8 @@ import logger from "morgan";
 // The following line sets up the environment variables before everything else.
 dotenv.config();
 
-import { connect } from "./db";
-
 // Import your concept routers here.
+import { connectDb } from "./db";
 import router from "./routes";
 
 export const app = express();
@@ -24,7 +23,7 @@ app.use(express.urlencoded({ extended: false })); // Also enable URL encoded req
 // Session allows us to store a cookie 🍪.
 app.use(
   session({
-    secret: "Hello 6.1040",
+    secret: process.env.SECRET || "Hello 6.1040",
     resave: true,
     saveUninitialized: false,
   }),
@@ -39,7 +38,7 @@ app.all("*", (req, res) => {
   });
 });
 
-void connect().then(() => {
+void connectDb().then(() => {
   app.listen(PORT, () => {
     console.log("Started listening on port", PORT);
   });

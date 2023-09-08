@@ -5,7 +5,7 @@ if (!mongoUri) {
   throw new Error("Please add the MongoDB connection SRV as 'MONGO_SRV'");
 }
 
-export const client = new MongoClient(mongoUri as string, {
+export const client = new MongoClient(mongoUri, {
   serverApi: {
     version: ServerApiVersion.v1,
     strict: true,
@@ -19,7 +19,7 @@ export const DB_NAME = "conception-db"; // Feel free to change db name!
  * Attempts to complete the connection to {@link client}.
  * Called in `app.ts`.
  */
-export async function connect() {
+export async function connectDb() {
   try {
     await client.connect();
   } catch (e) {
