@@ -17,7 +17,7 @@ declare module "express-session" {
 }
 
 class SessionConcept extends Concept<{}> {
-  setUser(session: Session, user: UserSession) {
+  setUser(session: Session, user: UserSession | undefined) {
     session.user = user;
   }
 
