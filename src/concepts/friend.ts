@@ -2,31 +2,33 @@ import Concept from "../framework/concept";
 import ConceptDb, { CollectionBase } from "../framework/conceptDb";
 import { NotAllowedError, NotFoundError } from "./errors";
 
+type UserId = string;
+
 export interface Friend extends CollectionBase {
-  user1: string;
-  user2: string;
+  user1: UserId;
+  user2: UserId;
 }
 
 export interface FriendRequest extends CollectionBase {
-  from: string;
-  to: string;
+  from: UserId;
+  to: UserId;
   status: "pending" | "rejected" | "accepted";
 }
 
 class FriendConcept extends Concept<{ friends: Friend; requests: FriendRequest }> {
-  async getRequests(userId: string) {
+  async getRequests(userId: UserId) {
     return await this.db.requests.readMany({
       $or: [{ from: userId }, { to: userId }],
     });
   }
 
-  async sendRequest(from: string, to: string) {
+  async sendRequest(from: UserId, to: UserId) {
     await this.canSendRequest(from, to);
     await this.db.requests.createOne({ from, to, status: "pending" });
     return { msg: "Sent request!" };
   }
 
-  async respondRequest(from: string, to: string, response: "accepted" | "rejected") {
+  async respondRequest(from: UserId, to: UserId, response: "accepted" | "rejected") {
     const request = await this.db.requests.popOne({ from, to, status: "pending" });
     if (request === null) {
       throw new NotFoundError(`There was no pending request from ${from} to ${to}!`);
@@ -41,7 +43,7 @@ class FriendConcept extends Concept<{ friends: Friend; requests: FriendRequest }
     return { msg: `Responded with ${response}!` };
   }
 
-  async removeRequest(from: string, to: string) {
+  async removeRequest(from: UserId, to: UserId) {
     const request = await this.db.requests.popOne({ from, to, status: "pending" });
     if (request === null) {
       throw new NotFoundError(`No pending request existed from ${from} to ${to}!`);
@@ -49,7 +51,7 @@ class FriendConcept extends Concept<{ friends: Friend; requests: FriendRequest }
     return { msg: "Removed request!" };
   }
 
-  async removeFriend(user: string, friend: string) {
+  async removeFriend(user: UserId, friend: UserId) {
     const friendship = await this.db.friends.popOne({
       $or: [
         { user1: user, user2: friend },
@@ -62,18 +64,18 @@ class FriendConcept extends Concept<{ friends: Friend; requests: FriendRequest }
     return { msg: "Unfriended!" };
   }
 
-  async getFriends(user: string) {
+  async getFriends(user: UserId) {
     const friendships = await this.db.friends.readMany({
       $or: [{ user1: user }, { user2: user }],
     });
     return friendships.map((friendship) => (friendship.user1 === user ? friendship.user2 : friendship.user1));
   }
 
-  private async addFriend(user1: string, user2: string) {
+  private async addFriend(user1: UserId, user2: UserId) {
     void this.db.friends.createOne({ user1, user2 });
   }
 
-  private async isNotFriends(u1: string, u2: string) {
+  private async isNotFriends(u1: UserId, u2: UserId) {
     const friendship = await this.db.friends.readOne({
       $or: [
         { user1: u1, user2: u2 },
@@ -85,7 +87,7 @@ class FriendConcept extends Concept<{ friends: Friend; requests: FriendRequest }
     }
   }
 
-  private async canSendRequest(u1: string, u2: string) {
+  private async canSendRequest(u1: UserId, u2: UserId) {
     if (u1 === u2) {
       throw new NotAllowedError(":)");
     }

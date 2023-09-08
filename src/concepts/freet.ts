@@ -4,8 +4,10 @@ import Concept from "../framework/concept";
 import ConceptDb, { CollectionBase, WithoutBase } from "../framework/conceptDb";
 import { NotAllowedError, NotFoundError } from "./errors";
 
+type UserId = string;
+
 export interface Freet extends CollectionBase {
-  author: string;
+  author: UserId;
   content: string;
   backgroundColor?: string;
 }
@@ -35,7 +37,7 @@ class FreetConcept extends Concept<{ freets: Freet }> {
     return { msg: "Freet deleted successfully!", freet };
   }
 
-  async isAuthorMatch(author: string, _id: string) {
+  async isAuthorMatch(author: UserId, _id: string) {
     const freet = await this.db.freets.readOneById(_id);
     if (!freet) {
       throw new NotFoundError(`Freet with _id ${_id} does not exist!`);
