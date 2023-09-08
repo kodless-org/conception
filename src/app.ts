@@ -10,7 +10,7 @@ dotenv.config();
 import { connect } from "./db";
 
 // Import your concept routers here.
-import { freetRouter, friendRouter, syncRouter, userRouter } from "./routes";
+import router from "./routes";
 
 export const app = express();
 const PORT = process.env.PORT || 3000;
@@ -30,9 +30,7 @@ app.use(
   }),
 );
 
-// Register your concept routers here.
-[userRouter, freetRouter, friendRouter].forEach((router) => app.use("/api/" + router.name, router.router));
-app.use("/api", syncRouter.router);
+app.use("/api", router);
 
 // For all unrecognized requests, return a not found message.
 app.all("*", (req, res) => {

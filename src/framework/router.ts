@@ -1,4 +1,5 @@
 import express, { Request, Response } from "express";
+import "reflect-metadata";
 
 import Concept from "./concept";
 import { getParamNames } from "./utils";
@@ -7,8 +8,8 @@ type HttpMethod = "all" | "get" | "post" | "put" | "delete" | "patch" | "options
 
 export class Router {
   public readonly router = express.Router();
+
   constructor(
-    public readonly name: string,
     private readonly ctx: Concept<any> | null = null, // eslint-disable-line
   ) {}
 
@@ -70,6 +71,39 @@ export class Router {
         return;
       }
       res.json(result);
+    };
+  }
+
+  static all(route: string) {
+    return this.httpDecorator("get", route);
+  }
+  static get(route: string) {
+    return this.httpDecorator("get", route);
+  }
+  static post(route: string) {
+    return this.httpDecorator("post", route);
+  }
+  static put(route: string) {
+    return this.httpDecorator("put", route);
+  }
+  static delete(route: string) {
+    return this.httpDecorator("delete", route);
+  }
+  static patch(route: string) {
+    return this.httpDecorator("patch", route);
+  }
+  static options(route: string) {
+    return this.httpDecorator("options", route);
+  }
+  static head(route: string) {
+    return this.httpDecorator("head", route);
+  }
+
+  private static httpDecorator(method: HttpMethod, route: string) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return function (target: any, propertyKey: string) {
+      Reflect.defineMetadata("method", method, target, propertyKey);
+      Reflect.defineMetadata("path", route, target, propertyKey);
     };
   }
 }
