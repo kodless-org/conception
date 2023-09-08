@@ -143,7 +143,7 @@ function getExpressRouter() {
     // The ugly cast is because TypeScript doesn't know that `routes[endpoint]` is a correct method.
     const action = (routes as unknown as Record<string, Function>)[endpoint];
 
-    router.route(method, path, action);
+    router.registerRoute(method, path, action);
   }
 
   return router.expressRouter;

@@ -17,33 +17,33 @@ export class Router {
     private readonly ctx: Concept<any> | null = null, // eslint-disable-line
   ) {}
 
-  public route(method: HttpMethod, path: string, action: Function) {
+  public registerRoute(method: HttpMethod, path: string, action: Function) {
     this.expressRouter[method](path, this.makeRoute(action));
   }
 
   public all(path: string, action: Function) {
-    this.route("all", path, action);
+    this.registerRoute("all", path, action);
   }
   public get(path: string, action: Function) {
-    this.route("get", path, action);
+    this.registerRoute("get", path, action);
   }
   public post(path: string, action: Function) {
-    this.route("post", path, action);
+    this.registerRoute("post", path, action);
   }
   public put(path: string, action: Function) {
-    this.route("put", path, action);
+    this.registerRoute("put", path, action);
   }
   public delete(path: string, action: Function) {
-    this.route("delete", path, action);
+    this.registerRoute("delete", path, action);
   }
   public patch(path: string, action: Function) {
-    this.route("patch", path, action);
+    this.registerRoute("patch", path, action);
   }
   public options(path: string, action: Function) {
-    this.route("options", path, action);
+    this.registerRoute("options", path, action);
   }
   public head(path: string, action: Function) {
-    this.route("head", path, action);
+    this.registerRoute("head", path, action);
   }
 
   private makeRoute(f: Function) {
