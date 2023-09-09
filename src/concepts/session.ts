@@ -1,23 +1,19 @@
 import { SessionData } from "express-session";
+import { ObjectId } from "mongodb";
 import Concept from "../framework/concept";
 import { NotAllowedError, UnauthenticatedError } from "./errors";
 
 export type Session = Partial<SessionData>;
 
-interface UserSession {
-  username: string;
-  _id: string;
-}
-
 // This allows us to overload express session data type.
 declare module "express-session" {
   export interface SessionData {
-    user: UserSession;
+    user: ObjectId;
   }
 }
 
 class SessionConcept extends Concept<{}> {
-  setUser(session: Session, user: UserSession | undefined) {
+  setUser(session: Session, user: ObjectId | undefined) {
     session.user = user;
   }
 

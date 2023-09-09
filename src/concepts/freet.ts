@@ -1,13 +1,11 @@
-import { Filter } from "mongodb";
+import { Filter, ObjectId } from "mongodb";
 
 import Concept from "../framework/concept";
-import ConceptDb, { CollectionBase, WithoutBase } from "../framework/conceptDb";
+import DocCollection, { BaseDoc, WithoutBase } from "../framework/doc";
 import { NotAllowedError, NotFoundError } from "./errors";
 
-type UserId = string;
-
-export interface Freet extends CollectionBase {
-  author: UserId;
+export interface Freet extends BaseDoc {
+  author: ObjectId;
   content: string;
   backgroundColor?: string;
 }
@@ -27,17 +25,17 @@ class FreetConcept extends Concept<{ freets: Freet }> {
     return { freets };
   }
 
-  async update(_id: string, update: Partial<PureFreet>) {
+  async update(_id: ObjectId, update: Partial<PureFreet>) {
     await this.db.freets.updateOneById(_id, update);
     return { msg: "Freet successfully updated!", freet: await this.db.freets.readOneById(_id) };
   }
 
-  async delete(_id: string) {
+  async delete(_id: ObjectId) {
     const freet = await this.db.freets.popOneById(_id);
     return { msg: "Freet deleted successfully!", freet };
   }
 
-  async isAuthorMatch(author: UserId, _id: string) {
+  async isAuthorMatch(author: ObjectId, _id: ObjectId) {
     const freet = await this.db.freets.readOneById(_id);
     if (!freet) {
       throw new NotFoundError(`Freet with _id ${_id} does not exist!`);
@@ -48,6 +46,6 @@ class FreetConcept extends Concept<{ freets: Freet }> {
   }
 }
 
-const freetManager = new FreetConcept({ freets: new ConceptDb<Freet>("freets") });
+const freetManager = new FreetConcept({ freets: new DocCollection<Freet>("freets") });
 
 export default freetManager;

@@ -1,20 +1,19 @@
+import { ObjectId } from "mongodb";
 import Concept from "../framework/concept";
-import ConceptDb, { CollectionBase, WithoutBase } from "../framework/conceptDb";
+import DocCollection, { BaseDoc } from "../framework/doc";
 import { BadValuesError, NotAllowedError, NotFoundError } from "./errors";
 
-export interface User extends CollectionBase {
+export interface UserDoc extends BaseDoc {
   username: string;
   password: string;
   profilePictureUrl?: string;
 }
 
-export type PureUser = WithoutBase<User>;
-
-class UserConcept extends Concept<{ users: User }> {
-  async create(user: PureUser) {
-    await this.canCreate(user);
-    const _id = (await this.db.users.createOne(user)).insertedId;
-    return { msg: "User created successfully!", user: { ...user, _id } };
+class UserConcept extends Concept<{ users: UserDoc }> {
+  async create(username: string, password: string) {
+    await this.canCreate(username, password);
+    const _id = (await this.db.users.createOne({ username, password })).insertedId;
+    return { msg: "User created successfully!", user: await this.db.users.readOneById(_id) };
   }
 
   async getUsers(username?: string) {
@@ -38,7 +37,7 @@ class UserConcept extends Concept<{ users: User }> {
     return { msg: "Successfully logged out." };
   }
 
-  async update(_id: string, update: Partial<User>) {
+  async update(_id: ObjectId, update: Partial<UserDoc>) {
     if (update.username !== undefined) {
       await this.isUsernameUnique(update.username);
     }
@@ -46,23 +45,23 @@ class UserConcept extends Concept<{ users: User }> {
     return { msg: "User updated successfully!" };
   }
 
-  async delete(_id: string) {
-    await this.db.users.deleteOneById(_id);
+  async delete(user: ObjectId) {
+    await this.db.users.deleteOneById(user);
     return { msg: "User deleted!" };
   }
 
-  async userExists(_id: string) {
+  async userExists(_id: ObjectId) {
     const maybeUser = await this.db.users.readOneById(_id);
     if (maybeUser === null) {
       throw new NotFoundError(`User not found!`);
     }
   }
 
-  private async canCreate(user: PureUser) {
-    if (!user.username || !user.password) {
+  private async canCreate(username: string, password: string) {
+    if (!username || !password) {
       throw new BadValuesError("Username and password must be non-empty!");
     }
-    await this.isUsernameUnique(user.username);
+    await this.isUsernameUnique(username);
   }
 
   private async isUsernameUnique(username: string) {
@@ -72,6 +71,6 @@ class UserConcept extends Concept<{ users: User }> {
   }
 }
 
-const userManager = new UserConcept({ users: new ConceptDb<User>("users") });
+const userManager = new UserConcept({ users: new DocCollection<UserDoc>("users") });
 
 export default userManager;

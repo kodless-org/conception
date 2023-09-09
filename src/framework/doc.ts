@@ -19,15 +19,15 @@ import {
 
 import db from "../db";
 
-export interface CollectionBase {
+export interface BaseDoc {
   _id: ObjectId;
   dateCreated: Date;
   dateUpdated: Date;
 }
 
-export type WithoutBase<T extends CollectionBase> = Omit<T, keyof CollectionBase>;
+export type WithoutBase<T extends BaseDoc> = Omit<T, keyof BaseDoc>;
 
-export default class ConceptDb<Schema extends CollectionBase> {
+export default class DocCollection<Schema extends BaseDoc> {
   protected readonly collection: Collection<Schema>;
 
   constructor(public readonly name: string) {

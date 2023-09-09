@@ -1,4 +1,4 @@
-import { Filter } from "mongodb";
+import { Filter, ObjectId } from "mongodb";
 
 import { HttpMethod, Router } from "./framework/router";
 
@@ -6,7 +6,7 @@ import { BadValuesError } from "./concepts/errors";
 import freetManager, { Freet, PureFreet } from "./concepts/freet";
 import friendManager from "./concepts/friend";
 import sessionManager, { Session } from "./concepts/session";
-import userManager, { User } from "./concepts/user";
+import userManager, { UserDoc } from "./concepts/user";
 
 class Routes {
   @Router.get("/users")
@@ -15,40 +15,39 @@ class Routes {
   }
 
   @Router.post("/users")
-  async createUser(session: Session, user: User) {
+  async createUser(session: Session, username: string, password: string) {
     sessionManager.isLoggedOut(session);
-    return await userManager.create(user);
+    return await userManager.create(username, password);
   }
 
   @Router.patch("/users")
-  async updateUser(session: Session, update: Partial<User>) {
-    const userId = sessionManager.getUser(session)._id;
-    return await userManager.update(userId, update);
+  async updateUser(session: Session, update: Partial<UserDoc>) {
+    const user = sessionManager.getUser(session);
+    return await userManager.update(user, update);
   }
 
   @Router.delete("/users")
   async deleteUser(session: Session) {
-    const userId = sessionManager.getUser(session)._id;
+    const user = sessionManager.getUser(session);
     sessionManager.setUser(session, undefined);
-    return await userManager.delete(userId);
+    return await userManager.delete(user);
   }
 
   @Router.post("/login")
   async logIn(session: Session, username: string, password: string) {
     sessionManager.isLoggedOut(session);
     const u = await userManager.logIn(username, password);
-    const userId = u._id.toString();
-    sessionManager.setUser(session, { username: username, _id: userId });
-    const f = await freetManager.create({ content: "Hi, I logged in!", author: userId });
+    sessionManager.setUser(session, u._id);
+    const f = await freetManager.create({ content: "Hi, I logged in!", author: u._id });
     return { msg: "Logged in and freeted!", user: u, freet: f };
   }
 
   @Router.post("/logout")
   async logOut(session: Session) {
     sessionManager.isLoggedIn(session);
-    const userId = sessionManager.getUser(session)._id;
+    const user = sessionManager.getUser(session);
     sessionManager.setUser(session, undefined);
-    const f = await freetManager.create({ content: "Bye bye, logging off!", author: userId });
+    const f = await freetManager.create({ content: "Bye bye, logging off!", author: user });
     return { msg: "Logged out and freeted!", freet: f };
   }
 
@@ -63,61 +62,63 @@ class Routes {
     // not contain the `author` property. This is OK to have in TypeScript
     // as long as we populate it ourselves by overriding.
 
-    const userId = sessionManager.getUser(session)._id;
-    return await freetManager.create({ ...freet, author: userId });
+    const user = sessionManager.getUser(session);
+    return await freetManager.create({ ...freet, author: user });
   }
 
   @Router.patch("/freets/:_id")
-  async updateFreet(session: Session, _id: string, update: Partial<PureFreet>) {
-    const userId = sessionManager.getUser(session)._id;
-    await freetManager.isAuthorMatch(userId, _id);
+  async updateFreet(session: Session, _id: ObjectId, update: Partial<PureFreet>) {
+    const user = sessionManager.getUser(session);
+    await freetManager.isAuthorMatch(user, _id);
     return await freetManager.update(_id, update);
   }
 
   @Router.delete("/freets/:_id")
-  async deleteFreet(session: Session, _id: string) {
-    const userId = sessionManager.getUser(session)._id;
-    await freetManager.isAuthorMatch(userId, _id);
+  async deleteFreet(session: Session, _id: ObjectId) {
+    const user = sessionManager.getUser(session);
+    await freetManager.isAuthorMatch(user, _id);
     return freetManager.delete(_id);
   }
 
-  @Router.get("/friends/:userId")
-  async getFriends(userId: string) {
-    return await friendManager.getFriends(userId);
+  @Router.get("/friends/:user")
+  async getFriends(user: ObjectId) {
+    return await friendManager.getFriends(user);
   }
 
   @Router.delete("/friends/:friend")
-  async removeFriend(session: Session, friendId: string) {
-    const userId = sessionManager.getUser(session)._id;
-    await friendManager.removeFriend(userId, friendId);
+  async removeFriend(session: Session, friend: ObjectId) {
+    const user = sessionManager.getUser(session);
+    await friendManager.removeFriend(user, friend);
   }
 
   @Router.get("/requests")
   async getRequests(session: Session) {
-    const userId = sessionManager.getUser(session)._id;
-    return await friendManager.getRequests(userId);
+    const user = sessionManager.getUser(session);
+    return await friendManager.getRequests(user);
   }
 
   @Router.delete("/requests/:to")
-  async removeRequest(session: Session, to: string) {
-    const userId = sessionManager.getUser(session)._id;
-    return await friendManager.removeRequest(userId, to);
+  async removeRequest(session: Session, to: ObjectId) {
+    const user = sessionManager.getUser(session);
+    return await friendManager.removeRequest(user, to);
   }
 
   @Router.put("/requests/:from")
-  async respondRequest(session: Session, to: string, response: string) {
+  async respondRequest(session: Session, from: ObjectId, response: string) {
     if (response !== "accepted" && response !== "rejected") {
       throw new BadValuesError("response needs to be 'accepted' or 'rejected'");
     }
-    const userId = sessionManager.getUser(session)._id;
-    return await friendManager.respondRequest(userId, to, response);
+    const user = sessionManager.getUser(session);
+    return await friendManager.respondRequest(user, from, response);
   }
 
+  // manager -> concept
+  // sendFriendRequest
   @Router.post("/requests/:to")
-  async sendRequest(session: Session, to: string) {
-    const userId = sessionManager.getUser(session)._id;
+  async sendRequest(session: Session, to: ObjectId) {
     await userManager.userExists(to);
-    return await friendManager.sendRequest(userId, to);
+    const user = sessionManager.getUser(session);
+    return await friendManager.sendRequest(user, to);
   }
 }
 
