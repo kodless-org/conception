@@ -17,7 +17,7 @@ export const DB_NAME = "conception-db"; // Feel free to change db name!
 
 /**
  * Attempts to complete the connection to {@link client}.
- * Called in `app.ts`.
+ * Called in `main.ts`.
  */
 export async function connectDb() {
   try {
