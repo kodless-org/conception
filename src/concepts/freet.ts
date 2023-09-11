@@ -1,31 +1,33 @@
 import { Filter, ObjectId } from "mongodb";
 
 import Concept from "../framework/concept";
-import DocCollection, { BaseDoc, WithoutBase } from "../framework/doc";
+import { BaseDoc } from "../framework/doc";
 import { NotAllowedError, NotFoundError } from "./errors";
 
-export interface Freet extends BaseDoc {
-  author: ObjectId;
-  content: string;
+export interface FreetOptions {
   backgroundColor?: string;
 }
 
-export type PureFreet = WithoutBase<Freet>;
+export interface FreetDoc extends BaseDoc {
+  author: ObjectId;
+  content: string;
+  options?: FreetOptions;
+}
 
-class FreetConcept extends Concept<{ freets: Freet }> {
-  async create(freet: PureFreet) {
-    const _id = (await this.db.freets.createOne(freet)).insertedId;
-    return { msg: "Freet successfully created!", freet: { ...freet, _id } };
+export default class FreetConcept extends Concept<{ freets: FreetDoc }> {
+  async create(author: ObjectId, content: string, options?: FreetOptions) {
+    const _id = (await this.db.freets.createOne({ author, content, options })).insertedId;
+    return { msg: "Freet successfully created!", freet: await this.db.freets.readOneById(_id) };
   }
 
-  async read(query: Filter<Freet>) {
+  async read(query: Filter<FreetDoc>) {
     const freets = await this.db.freets.readMany(query, {
       sort: { dateUpdated: -1 },
     });
     return { freets };
   }
 
-  async update(_id: ObjectId, update: Partial<PureFreet>) {
+  async update(_id: ObjectId, update: Partial<FreetDoc>) {
     await this.db.freets.updateOneById(_id, update);
     return { msg: "Freet successfully updated!", freet: await this.db.freets.readOneById(_id) };
   }
@@ -45,7 +47,3 @@ class FreetConcept extends Concept<{ freets: Freet }> {
     }
   }
 }
-
-const freetManager = new FreetConcept({ freets: new DocCollection<Freet>("freets") });
-
-export default freetManager;

@@ -1,6 +1,6 @@
 import { ObjectId } from "mongodb";
 import Concept from "../framework/concept";
-import DocCollection, { BaseDoc } from "../framework/doc";
+import { BaseDoc } from "../framework/doc";
 import { NotAllowedError, NotFoundError } from "./errors";
 
 export interface FriendshipDoc extends BaseDoc {
@@ -8,13 +8,13 @@ export interface FriendshipDoc extends BaseDoc {
   user2: ObjectId;
 }
 
-export interface FriendRequest extends BaseDoc {
+export interface FriendRequestDoc extends BaseDoc {
   from: ObjectId;
   to: ObjectId;
   status: "pending" | "rejected" | "accepted";
 }
 
-class FriendConcept extends Concept<{ friends: FriendshipDoc; requests: FriendRequest }> {
+export default class FriendConcept extends Concept<{ friends: FriendshipDoc; requests: FriendRequestDoc }> {
   async getRequests(userId: ObjectId) {
     return await this.db.requests.readMany({
       $or: [{ from: userId }, { to: userId }],
@@ -102,10 +102,3 @@ class FriendConcept extends Concept<{ friends: FriendshipDoc; requests: FriendRe
     }
   }
 }
-
-const friendManager = new FriendConcept({
-  friends: new DocCollection<FriendshipDoc>("friends"),
-  requests: new DocCollection<FriendRequest>("friendRequests"),
-});
-
-export default friendManager;

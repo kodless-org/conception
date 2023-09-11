@@ -3,125 +3,134 @@ import { Filter, ObjectId } from "mongodb";
 import { HttpMethod, Router } from "./framework/router";
 
 import { BadValuesError } from "./concepts/errors";
-import freetManager, { Freet, PureFreet } from "./concepts/freet";
-import friendManager from "./concepts/friend";
-import sessionManager, { Session } from "./concepts/session";
-import userManager, { UserDoc } from "./concepts/user";
+import { default as FreetConcept, FreetDoc, FreetOptions } from "./concepts/freet";
+import FriendConcept, { FriendRequestDoc, FriendshipDoc } from "./concepts/friend";
+import SessionConcept, { SessionDoc } from "./concepts/session";
+import UserConcept, { UserDoc } from "./concepts/user";
+import DocCollection from "./framework/doc";
+
+// App Definition using concepts
+const Session = new SessionConcept({});
+const User = new UserConcept({ users: new DocCollection<UserDoc>("users") });
+const Freet = new FreetConcept({ freets: new DocCollection<FreetDoc>("freets") });
+const Friend = new FriendConcept({
+  friends: new DocCollection<FriendshipDoc>("friends"),
+  requests: new DocCollection<FriendRequestDoc>("friendRequests"),
+});
 
 class Routes {
   @Router.get("/users")
   async getUsers(username?: string) {
-    return await userManager.getUsers(username);
+    return await User.getUsers(username);
   }
 
   @Router.post("/users")
-  async createUser(session: Session, username: string, password: string) {
-    sessionManager.isLoggedOut(session);
-    return await userManager.create(username, password);
+  async createUser(session: SessionDoc, username: string, password: string) {
+    Session.isLoggedOut(session);
+    return await User.create(username, password);
   }
 
   @Router.patch("/users")
-  async updateUser(session: Session, update: Partial<UserDoc>) {
-    const user = sessionManager.getUser(session);
-    return await userManager.update(user, update);
+  async updateUser(session: SessionDoc, update: Partial<UserDoc>) {
+    const user = Session.getUser(session);
+    return await User.update(user, update);
   }
 
   @Router.delete("/users")
-  async deleteUser(session: Session) {
-    const user = sessionManager.getUser(session);
-    sessionManager.setUser(session, undefined);
-    return await userManager.delete(user);
+  async deleteUser(session: SessionDoc) {
+    const user = Session.getUser(session);
+    Session.setUser(session, undefined);
+    return await User.delete(user);
   }
 
   @Router.post("/login")
-  async logIn(session: Session, username: string, password: string) {
-    sessionManager.isLoggedOut(session);
-    const u = await userManager.logIn(username, password);
-    sessionManager.setUser(session, u._id);
-    const f = await freetManager.create({ content: "Hi, I logged in!", author: u._id });
+  async logIn(session: SessionDoc, username: string, password: string) {
+    Session.isLoggedOut(session);
+    const u = await User.logIn(username, password);
+    Session.setUser(session, u._id);
+    const f = await Freet.create(u._id, "Hi, I logged in!");
     return { msg: "Logged in and freeted!", user: u, freet: f };
   }
 
   @Router.post("/logout")
-  async logOut(session: Session) {
-    sessionManager.isLoggedIn(session);
-    const user = sessionManager.getUser(session);
-    sessionManager.setUser(session, undefined);
-    const f = await freetManager.create({ content: "Bye bye, logging off!", author: user });
+  async logOut(session: SessionDoc) {
+    Session.isLoggedIn(session);
+    const user = Session.getUser(session);
+    Session.setUser(session, undefined);
+    const f = await Freet.create(user, "Bye bye, logging off!");
     return { msg: "Logged out and freeted!", freet: f };
   }
 
   @Router.get("/freets")
-  async getFreets(query: Filter<Freet>) {
-    return await freetManager.read(query);
+  async getFreets(query: Filter<FreetDoc>) {
+    return await Freet.read(query);
   }
 
   @Router.post("/freets")
-  async createFreet(session: Session, freet: PureFreet) {
-    // Note that even though type of `freet` is `PureFreet`, it should
-    // not contain the `author` property. This is OK to have in TypeScript
-    // as long as we populate it ourselves by overriding.
-
-    const user = sessionManager.getUser(session);
-    return await freetManager.create({ ...freet, author: user });
+  async createFreet(session: SessionDoc, author: ObjectId, content: string, options?: FreetOptions) {
+    const user = Session.getUser(session);
+    return await Freet.create(user, content, options);
   }
 
   @Router.patch("/freets/:_id")
-  async updateFreet(session: Session, _id: ObjectId, update: Partial<PureFreet>) {
-    const user = sessionManager.getUser(session);
-    await freetManager.isAuthorMatch(user, _id);
-    return await freetManager.update(_id, update);
+  async updateFreet(session: SessionDoc, _id: ObjectId, update: Partial<FreetDoc>) {
+    const user = Session.getUser(session);
+    await Freet.isAuthorMatch(user, _id);
+    return await Freet.update(_id, update);
   }
 
   @Router.delete("/freets/:_id")
-  async deleteFreet(session: Session, _id: ObjectId) {
-    const user = sessionManager.getUser(session);
-    await freetManager.isAuthorMatch(user, _id);
-    return freetManager.delete(_id);
+  async deleteFreet(session: SessionDoc, _id: ObjectId) {
+    const user = Session.getUser(session);
+    await Freet.isAuthorMatch(user, _id);
+    return Freet.delete(_id);
   }
 
   @Router.get("/friends/:user")
   async getFriends(user: ObjectId) {
-    return await friendManager.getFriends(user);
+    return await Friend.getFriends(user);
   }
 
   @Router.delete("/friends/:friend")
-  async removeFriend(session: Session, friend: ObjectId) {
-    const user = sessionManager.getUser(session);
-    await friendManager.removeFriend(user, friend);
+  async removeFriend(session: SessionDoc, friend: ObjectId) {
+    const user = Session.getUser(session);
+    await Friend.removeFriend(user, friend);
   }
 
   @Router.get("/requests")
-  async getRequests(session: Session) {
-    const user = sessionManager.getUser(session);
-    return await friendManager.getRequests(user);
+  async getRequests(session: SessionDoc) {
+    const user = Session.getUser(session);
+    return await Friend.getRequests(user);
   }
 
   @Router.delete("/requests/:to")
-  async removeRequest(session: Session, to: ObjectId) {
-    const user = sessionManager.getUser(session);
-    return await friendManager.removeRequest(user, to);
+  async removeRequest(session: SessionDoc, to: ObjectId) {
+    const user = Session.getUser(session);
+    return await Friend.removeRequest(user, to);
   }
 
   @Router.put("/requests/:from")
-  async respondRequest(session: Session, from: ObjectId, response: string) {
+  async respondRequest(session: SessionDoc, from: ObjectId, response: string) {
     if (response !== "accepted" && response !== "rejected") {
       throw new BadValuesError("response needs to be 'accepted' or 'rejected'");
     }
-    const user = sessionManager.getUser(session);
-    return await friendManager.respondRequest(user, from, response);
+    const user = Session.getUser(session);
+    return await Friend.respondRequest(user, from, response);
   }
 
   // manager -> concept
   // sendFriendRequest
   @Router.post("/requests/:to")
-  async sendRequest(session: Session, to: ObjectId) {
-    await userManager.userExists(to);
-    const user = sessionManager.getUser(session);
-    return await friendManager.sendRequest(user, to);
+  async sendRequest(session: SessionDoc, to: ObjectId) {
+    await User.userExists(to);
+    const user = Session.getUser(session);
+    return await Friend.sendRequest(user, to);
   }
 }
 
+/**
+ * @returns An Express router instance with all the routes in {@link Routes} registered.
+ */
 function getExpressRouter() {
   const router = new Router();
   const routes = new Routes();

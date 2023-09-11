@@ -1,6 +1,6 @@
 import { ObjectId } from "mongodb";
 import Concept from "../framework/concept";
-import DocCollection, { BaseDoc } from "../framework/doc";
+import { BaseDoc } from "../framework/doc";
 import { BadValuesError, NotAllowedError, NotFoundError } from "./errors";
 
 export interface UserDoc extends BaseDoc {
@@ -9,7 +9,7 @@ export interface UserDoc extends BaseDoc {
   profilePictureUrl?: string;
 }
 
-class UserConcept extends Concept<{ users: UserDoc }> {
+export default class UserConcept extends Concept<{ users: UserDoc }> {
   async create(username: string, password: string) {
     await this.canCreate(username, password);
     const _id = (await this.db.users.createOne({ username, password })).insertedId;
@@ -70,7 +70,3 @@ class UserConcept extends Concept<{ users: UserDoc }> {
     }
   }
 }
-
-const userManager = new UserConcept({ users: new DocCollection<UserDoc>("users") });
-
-export default userManager;

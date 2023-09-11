@@ -29,8 +29,12 @@ export type WithoutBase<T extends BaseDoc> = Omit<T, keyof BaseDoc>;
 
 export default class DocCollection<Schema extends BaseDoc> {
   protected readonly collection: Collection<Schema>;
+  private static collectionNames: Set<string> = new Set();
 
   constructor(public readonly name: string) {
+    if (DocCollection.collectionNames.has(name)) {
+      throw new Error(`Collection '${name}' already exists!`);
+    }
     this.collection = db.collection(name);
   }
 
