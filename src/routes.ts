@@ -104,13 +104,13 @@ class Routes {
   }
 
   @Router.delete("/requests/:to")
-  async removeRequest(session: SessionDoc, to: ObjectId) {
+  async removeFriendRequest(session: SessionDoc, to: ObjectId) {
     const user = Session.getUser(session);
     return await Friend.removeRequest(user, to);
   }
 
   @Router.put("/requests/:from")
-  async respondRequest(session: SessionDoc, from: ObjectId, response: string) {
+  async respondFriendRequest(session: SessionDoc, from: ObjectId, response: string) {
     if (response !== "accepted" && response !== "rejected") {
       throw new BadValuesError("response needs to be 'accepted' or 'rejected'");
     }
@@ -118,10 +118,8 @@ class Routes {
     return await Friend.respondRequest(user, from, response);
   }
 
-  // manager -> concept
-  // sendFriendRequest
   @Router.post("/requests/:to")
-  async sendRequest(session: SessionDoc, to: ObjectId) {
+  async sendFriendRequest(session: SessionDoc, to: ObjectId) {
     await User.userExists(to);
     const user = Session.getUser(session);
     return await Friend.sendRequest(user, to);
