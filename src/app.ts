@@ -1,45 +1,14 @@
-import cors from "cors";
-import dotenv from "dotenv";
-import express from "express";
-import session from "express-session";
-import logger from "morgan";
+import FreetConcept, { FreetDoc } from "./concepts/freet";
+import FriendConcept, { FriendRequestDoc, FriendshipDoc } from "./concepts/friend";
+import UserConcept, { UserDoc } from "./concepts/user";
+import WebSessionConcept from "./concepts/websession";
+import DocCollection from "./framework/doc";
 
-// The following line sets up the environment variables before everything else.
-dotenv.config();
-
-// Import your concept routers here.
-import { connectDb } from "./db";
-import router from "./routes";
-
-export const app = express();
-const PORT = process.env.PORT || 3000;
-app.use(logger("dev"));
-
-app.use(cors()); // https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS
-
-app.use(express.json()); // Enable parsing JSON in requests and responses.
-app.use(express.urlencoded({ extended: false })); // Also enable URL encoded request and responses.
-
-// Session allows us to store a cookie 🍪.
-app.use(
-  session({
-    secret: process.env.SECRET || "Hello 6.1040",
-    resave: true,
-    saveUninitialized: false,
-  }),
-);
-
-app.use("/api", router);
-
-// For all unrecognized requests, return a not found message.
-app.all("*", (req, res) => {
-  res.status(404).json({
-    msg: "Page not found",
-  });
-});
-
-void connectDb().then(() => {
-  app.listen(PORT, () => {
-    console.log("Started listening on port", PORT);
-  });
+// App Definition using concepts
+export const WebSession = new WebSessionConcept({});
+export const User = new UserConcept({ users: new DocCollection<UserDoc>("users") });
+export const Freet = new FreetConcept({ freets: new DocCollection<FreetDoc>("freets") });
+export const Friend = new FriendConcept({
+  friends: new DocCollection<FriendshipDoc>("friends"),
+  requests: new DocCollection<FriendRequestDoc>("friendRequests"),
 });

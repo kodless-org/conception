@@ -2,9 +2,9 @@
   "name": "conception",
   "version": "0.1-alpha",
   "description": "POC for web app with concepts",
-  "main": "dist/app.js",
+  "main": "dist/main.js",
   "scripts": {
-    "start": "tsc && node -r source-map-support/register dist/app.js",
+    "start": "tsc && node -r source-map-support/register dist/main.js",
     "lint": "npx eslint . --ext .ts && npx prettier . --check",
     "format": "npx eslint . --ext .ts --fix && npx prettier . --write"
   },

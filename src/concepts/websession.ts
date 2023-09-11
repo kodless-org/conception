@@ -3,7 +3,7 @@ import { ObjectId } from "mongodb";
 import Concept from "../framework/concept";
 import { NotAllowedError, UnauthenticatedError } from "./errors";
 
-export type SessionDoc = SessionData;
+export type WebSessionDoc = SessionData;
 
 // This allows us to overload express session data type.
 declare module "express-session" {
@@ -12,23 +12,23 @@ declare module "express-session" {
   }
 }
 
-export default class SessionConcept extends Concept<{}> {
-  setUser(session: SessionDoc, user: ObjectId | undefined) {
+export default class WebSessionConcept extends Concept<{}> {
+  setUser(session: WebSessionDoc, user: ObjectId | undefined) {
     session.user = user;
   }
 
-  getUser(session: SessionDoc) {
+  getUser(session: WebSessionDoc) {
     this.isLoggedIn(session);
     return session.user!;
   }
 
-  isLoggedIn(session: SessionDoc) {
+  isLoggedIn(session: WebSessionDoc) {
     if (session.user === undefined) {
       throw new UnauthenticatedError("Not logged in!");
     }
   }
 
-  isLoggedOut(session: SessionDoc) {
+  isLoggedOut(session: WebSessionDoc) {
     if (session.user !== undefined) {
       throw new NotAllowedError("Must be logged out!");
     }
