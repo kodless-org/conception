@@ -44,12 +44,16 @@ export default class DocCollection<Schema extends BaseDoc> {
    * This method removes "illegal" fields from an item
    * so the client cannot fake them.
    */
-  private sanitize(item: Partial<Schema>) {
+  private sanitizeItem(item: Partial<Schema>) {
     delete item._id;
     delete item.dateCreated;
     delete item.dateUpdated;
   }
 
+  /**
+   * This method fixes the _id field of a filter.
+   * In case the _id is a string, it will be converted to an ObjectId.
+   */
   private sanitizeFilter(filter: Filter<Schema>) {
     if (filter._id && typeof filter._id === "string" && ObjectId.isValid(filter._id)) {
       filter._id = new ObjectId(filter._id) as Condition<WithId<Schema>["_id"]>;
@@ -57,7 +61,7 @@ export default class DocCollection<Schema extends BaseDoc> {
   }
 
   async createOne(item: Partial<Schema>): Promise<InsertOneResult> {
-    this.sanitize(item);
+    this.sanitizeItem(item);
     item.dateCreated = new Date();
     item.dateUpdated = new Date();
     return await this.collection.insertOne(item as OptionalUnlessRequiredId<Schema>);
@@ -65,7 +69,7 @@ export default class DocCollection<Schema extends BaseDoc> {
 
   async createMany(items: Partial<Schema>[], options?: BulkWriteOptions): Promise<InsertManyResult> {
     items.forEach((item) => {
-      this.sanitize(item);
+      this.sanitizeItem(item);
       item.dateCreated = new Date();
       item.dateUpdated = new Date();
     });
@@ -84,12 +88,12 @@ export default class DocCollection<Schema extends BaseDoc> {
 
   async replaceOne(filter: Filter<Schema>, item: Partial<Schema>, options?: ReplaceOptions): Promise<UpdateResult<Schema> | Document> {
     this.sanitizeFilter(filter);
-    this.sanitize(item);
+    this.sanitizeItem(item);
     return await this.collection.replaceOne(filter, item as WithoutId<Schema>, options);
   }
 
   async updateOne(filter: Filter<Schema>, update: Partial<Schema>, options?: FindOneAndUpdateOptions): Promise<UpdateResult<Schema>> {
-    this.sanitize(update);
+    this.sanitizeItem(update);
     this.sanitizeFilter(filter);
     update.dateUpdated = new Date();
     return await this.collection.updateOne(filter, { $set: update }, options);
