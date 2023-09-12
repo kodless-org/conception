@@ -1,7 +1,6 @@
 import express, { Request, Response } from "express";
 import "reflect-metadata";
 
-import Concept from "./concept";
 import { getParamNames } from "./utils";
 
 export type HttpMethod = "all" | "get" | "post" | "put" | "delete" | "patch" | "options" | "head";
@@ -13,9 +12,7 @@ export type HttpMethod = "all" | "get" | "post" | "put" | "delete" | "patch" | "
 export class Router {
   public readonly expressRouter = express.Router();
 
-  constructor(
-    private readonly ctx: Concept<any> | null = null, // eslint-disable-line
-  ) {}
+  constructor() {}
 
   public registerRoute(method: HttpMethod, path: string, action: Function) {
     this.expressRouter[method](path, this.makeRoute(action));
@@ -65,13 +62,14 @@ export class Router {
 
       let result;
       try {
-        result = f.call(this.ctx, ...args);
+        result = f.call(null, ...args);
         if (result instanceof Promise) {
           result = await result;
         }
         // eslint-disable-next-line
       } catch (e: any) {
-        res.status(e.HTTP_CODE ?? 500).json({ msg: e.message ?? "Internal Server Error" });
+        const error = e as Error & { HTTP_CODE?: number };
+        res.status(error.HTTP_CODE ?? 500).json({ msg: error.message ?? "Internal Server Error" });
         return;
       }
       res.json(result);
@@ -111,4 +109,31 @@ export class Router {
       });
     };
   }
+}
+
+export function getExpressRouter(routes: Object) {
+  const router = new Router();
+
+  // Get all methods in the Routes class (e.g., getUsers, createUser, etc).
+  const endpoints = Object.getOwnPropertyNames(Object.getPrototypeOf(routes));
+
+  // Register the methods as routes in `router`.
+  for (const endpoint of endpoints) {
+    // Get the method and path metadata from the routes object.
+    // These come from decorators in the Routes class.
+    const method = Reflect.getMetadata("method", routes, endpoint) as HttpMethod;
+    const path = Reflect.getMetadata("path", routes, endpoint) as string;
+
+    // Skip if the method or path is not defined (e.g., when endpoint is the constructor)
+    if (!method || !path) {
+      continue;
+    }
+
+    // The ugly cast is because TypeScript doesn't know that `routes[endpoint]` is a correct method.
+    const action = (routes as Record<string, Function>)[endpoint];
+
+    router.registerRoute(method, path, action);
+  }
+
+  return router.expressRouter;
 }
