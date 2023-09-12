@@ -4,41 +4,10 @@ import { Router, getExpressRouter } from "./framework/router";
 
 import { Freet, Friend, User, WebSession } from "./app";
 import { BadValuesError } from "./concepts/errors";
-import { FreetDoc, FreetOptions } from "./concepts/freet";
+import { FreetAuthorNotMatchError, FreetDoc, FreetOptions } from "./concepts/freet";
+import { AlreadyFriendsError, FriendNotFoundError, FriendRequestAlreadyExistsError, FriendRequestNotFoundError } from "./concepts/friend";
 import { UserDoc } from "./concepts/user";
 import { WebSessionDoc } from "./concepts/websession";
-
-// ErrorHandler.register(FreetAuthorNotMatchError, (e: FreetAuthorNotMatchError) => {
-//   const username = (await User.getUserById(e.author)).username;
-//   return e.formatWith(username, e._id);
-// });
-
-// export class ErrorHandler {
-//   static async FreetAuthorNotMatchError(e: FreetAuthorNotMatchError) {
-//     const username = (await User.getUserById(e.author)).username;
-//     return e.formatWith(username, e._id);
-//   }
-
-//   static async FriendNotFoundError(e: FriendNotFoundError) {
-//     const [user1, user2] = await Promise.all([User.getUserById(e.user1), User.getUserById(e.user2)]);
-//     return e.formatWith(user1.username, user2.username);
-//   }
-
-//   static async FriendRequestAlreadyExistsError(e: FriendRequestAlreadyExistsError) {
-//     const [user1, user2] = await Promise.all([User.getUserById(e.from), User.getUserById(e.to)]);
-//     return e.formatWith(user1.username, user2.username);
-//   }
-
-//   static async FriendRequestNotFoundError(e: FriendRequestNotFoundError) {
-//     const [user1, user2] = await Promise.all([User.getUserById(e.from), User.getUserById(e.to)]);
-//     return e.formatWith(user1.username, user2.username);
-//   }
-
-//   static async AlreadyFriendsError(e: AlreadyFriendsError) {
-//     const [user1, user2] = await Promise.all([User.getUserById(e.user1), User.getUserById(e.user2)]);
-//     return e.formatWith(user1.username, user2.username);
-//   }
-// }
 
 class Routes {
   @Router.get("/users")
@@ -147,5 +116,30 @@ class Routes {
     return await Friend.sendRequest(user, to);
   }
 }
+
+Router.registerError(FreetAuthorNotMatchError, async (e) => {
+  const username = (await User.getUserById(e.author)).username;
+  return e.formatWith(username, e._id);
+});
+
+Router.registerError(FriendRequestAlreadyExistsError, async (e) => {
+  const [user1, user2] = await Promise.all([User.getUserById(e.from), User.getUserById(e.to)]);
+  return e.formatWith(user1.username, user2.username);
+});
+
+Router.registerError(FriendNotFoundError, async (e) => {
+  const [user1, user2] = await Promise.all([User.getUserById(e.user1), User.getUserById(e.user2)]);
+  return e.formatWith(user1.username, user2.username);
+});
+
+Router.registerError(FriendRequestNotFoundError, async (e) => {
+  const [user1, user2] = await Promise.all([User.getUserById(e.from), User.getUserById(e.to)]);
+  return e.formatWith(user1.username, user2.username);
+});
+
+Router.registerError(AlreadyFriendsError, async (e) => {
+  const [user1, user2] = await Promise.all([User.getUserById(e.user1), User.getUserById(e.user2)]);
+  return e.formatWith(user1.username, user2.username);
+});
 
 export default getExpressRouter(new Routes());

@@ -43,7 +43,7 @@ export default class FreetConcept {
     if (!freet) {
       throw new FreetNotFoundError(_id);
     }
-    if (freet.author !== user) {
+    if (freet.author.toString() !== user.toString()) {
       throw new FreetAuthorNotMatchError(user, _id);
     }
   }

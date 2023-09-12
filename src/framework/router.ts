@@ -14,6 +14,10 @@ export class Router {
 
   constructor() {}
 
+  public static registerError<EType>(etype: new (...args: never[]) => EType, handler: (e: EType) => Error | Promise<Error>) {
+    return [etype, handler];
+  }
+
   public registerRoute(method: HttpMethod, path: string, action: Function) {
     this.expressRouter[method](path, this.makeRoute(action));
   }
