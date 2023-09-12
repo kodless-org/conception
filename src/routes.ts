@@ -1,12 +1,44 @@
 import { Filter, ObjectId } from "mongodb";
 
-import { HttpMethod, Router } from "./framework/router";
+import { Router, getExpressRouter } from "./framework/router";
 
 import { Freet, Friend, User, WebSession } from "./app";
 import { BadValuesError } from "./concepts/errors";
 import { FreetDoc, FreetOptions } from "./concepts/freet";
 import { UserDoc } from "./concepts/user";
 import { WebSessionDoc } from "./concepts/websession";
+
+// ErrorHandler.register(FreetAuthorNotMatchError, (e: FreetAuthorNotMatchError) => {
+//   const username = (await User.getUserById(e.author)).username;
+//   return e.formatWith(username, e._id);
+// });
+
+// export class ErrorHandler {
+//   static async FreetAuthorNotMatchError(e: FreetAuthorNotMatchError) {
+//     const username = (await User.getUserById(e.author)).username;
+//     return e.formatWith(username, e._id);
+//   }
+
+//   static async FriendNotFoundError(e: FriendNotFoundError) {
+//     const [user1, user2] = await Promise.all([User.getUserById(e.user1), User.getUserById(e.user2)]);
+//     return e.formatWith(user1.username, user2.username);
+//   }
+
+//   static async FriendRequestAlreadyExistsError(e: FriendRequestAlreadyExistsError) {
+//     const [user1, user2] = await Promise.all([User.getUserById(e.from), User.getUserById(e.to)]);
+//     return e.formatWith(user1.username, user2.username);
+//   }
+
+//   static async FriendRequestNotFoundError(e: FriendRequestNotFoundError) {
+//     const [user1, user2] = await Promise.all([User.getUserById(e.from), User.getUserById(e.to)]);
+//     return e.formatWith(user1.username, user2.username);
+//   }
+
+//   static async AlreadyFriendsError(e: AlreadyFriendsError) {
+//     const [user1, user2] = await Promise.all([User.getUserById(e.user1), User.getUserById(e.user2)]);
+//     return e.formatWith(user1.username, user2.username);
+//   }
+// }
 
 class Routes {
   @Router.get("/users")
@@ -116,36 +148,4 @@ class Routes {
   }
 }
 
-/**
- * @returns An Express router instance with all the routes in {@link Routes} registered.
- */
-function getExpressRouter() {
-  const router = new Router();
-  const routes = new Routes();
-
-  // Get all methods in the Routes class (e.g., getUsers, createUser, etc).
-  const endpoints = Object.getOwnPropertyNames(Object.getPrototypeOf(routes));
-
-  // Register the methods as routes in `router`.
-  for (const endpoint of endpoints) {
-    // Get the method and path metadata from the routes object.
-    // These come from decorators in the Routes class.
-    const method = Reflect.getMetadata("method", routes, endpoint) as HttpMethod;
-    const path = Reflect.getMetadata("path", routes, endpoint) as string;
-
-    // Skip if the method or path is not defined (e.g., when endpoint is the constructor)
-    if (!method || !path) {
-      continue;
-    }
-
-    // The ugly cast is because TypeScript doesn't know that `routes[endpoint]` is a correct method.
-    const action = (routes as unknown as Record<string, Function>)[endpoint];
-
-    router.registerRoute(method, path, action);
-  }
-
-  return router.expressRouter;
-}
-
-// Export the Express router instance.
-export default getExpressRouter();
+export default getExpressRouter(new Routes());
