@@ -18,7 +18,7 @@ export default class FreetConcept {
 
   async create(author: ObjectId, content: string, options?: FreetOptions) {
     const _id = (await this.freets.createOne({ author, content, options })).insertedId;
-    return { msg: "Freet successfully created!", freet: await this.freets.readOneById(_id) };
+    return { msg: "Freet successfully created!", freet: await this.freets.readOne({ _id }) };
   }
 
   async read(query: Filter<FreetDoc>) {
@@ -29,17 +29,17 @@ export default class FreetConcept {
   }
 
   async update(_id: ObjectId, update: Partial<FreetDoc>) {
-    await this.freets.updateOneById(_id, update);
-    return { msg: "Freet successfully updated!", freet: await this.freets.readOneById(_id) };
+    await this.freets.updateOne({ _id }, update);
+    return { msg: "Freet successfully updated!", freet: await this.freets.readOne({ _id }) };
   }
 
   async delete(_id: ObjectId) {
-    const freet = await this.freets.popOneById(_id);
+    const freet = await this.freets.popOne({ _id });
     return { msg: "Freet deleted successfully!", freet };
   }
 
   async isAuthorMatch(user: ObjectId, _id: ObjectId) {
-    const freet = await this.freets.readOneById(_id);
+    const freet = await this.freets.readOne({ _id });
     if (!freet) {
       throw new FreetNotFoundError(_id);
     }

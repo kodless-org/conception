@@ -14,7 +14,7 @@ export default class UserConcept {
   async create(username: string, password: string) {
     await this.canCreate(username, password);
     const _id = (await this.users.createOne({ username, password })).insertedId;
-    return { msg: "User created successfully!", user: await this.users.readOneById(_id) };
+    return { msg: "User created successfully!", user: await this.users.readOne({ _id }) };
   }
 
   private sanitizeUser(user: UserDoc) {
@@ -24,7 +24,7 @@ export default class UserConcept {
   }
 
   async getUserById(_id: ObjectId) {
-    const user = await this.users.readOneById(_id);
+    const user = await this.users.readOne({ _id });
     if (user === null) {
       throw new NotFoundError(`User not found!`);
     }
@@ -52,17 +52,17 @@ export default class UserConcept {
     if (update.username !== undefined) {
       await this.isUsernameUnique(update.username);
     }
-    await this.users.updateOneById(_id, update);
+    await this.users.updateOne({ _id }, update);
     return { msg: "User updated successfully!" };
   }
 
   async delete(user: ObjectId) {
-    await this.users.deleteOneById(user);
+    await this.users.deleteOne({ user });
     return { msg: "User deleted!" };
   }
 
   async userExists(_id: ObjectId) {
-    const maybeUser = await this.users.readOneById(_id);
+    const maybeUser = await this.users.readOne({ _id });
     if (maybeUser === null) {
       throw new NotFoundError(`User not found!`);
     }

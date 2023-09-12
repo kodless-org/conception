@@ -11,11 +11,25 @@ export type HttpMethod = "all" | "get" | "post" | "put" | "delete" | "patch" | "
  */
 export class Router {
   public readonly expressRouter = express.Router();
+  private static readonly errorHandlers: Map<new (...args: never[]) => Error, (e: Error) => Error | Promise<Error>> = new Map();
 
   constructor() {}
 
   public static registerError<EType>(etype: new (...args: never[]) => EType, handler: (e: EType) => Error | Promise<Error>) {
-    return [etype, handler];
+    this.errorHandlers.set(etype as new (...args: never[]) => Error, handler as (e: Error) => Error | Promise<Error>);
+  }
+
+  private static async handleError(e: Error) {
+    try {
+      for (const [etype, handler] of this.errorHandlers) {
+        if (e instanceof etype) {
+          return await handler(e);
+        }
+      }
+      return e;
+    } catch (e) {
+      return e;
+    }
   }
 
   public registerRoute(method: HttpMethod, path: string, action: Function) {
@@ -72,7 +86,7 @@ export class Router {
         }
         // eslint-disable-next-line
       } catch (e: any) {
-        const error = e as Error & { HTTP_CODE?: number };
+        const error = (await Router.handleError(e)) as Error & { HTTP_CODE?: number };
         res.status(error.HTTP_CODE ?? 500).json({ msg: error.message ?? "Internal Server Error" });
         return;
       }

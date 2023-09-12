@@ -1,6 +1,7 @@
 import {
   BulkWriteOptions,
   Collection,
+  Condition,
   CountDocumentsOptions,
   DeleteOptions,
   DeleteResult,
@@ -14,6 +15,7 @@ import {
   OptionalUnlessRequiredId,
   ReplaceOptions,
   UpdateResult,
+  WithId,
   WithoutId,
 } from "mongodb";
 
@@ -48,6 +50,12 @@ export default class DocCollection<Schema extends BaseDoc> {
     delete item.dateUpdated;
   }
 
+  private sanitizeFilter(filter: Filter<Schema>) {
+    if (filter._id && typeof filter._id === "string" && ObjectId.isValid(filter._id)) {
+      filter._id = new ObjectId(filter._id) as Condition<WithId<Schema>["_id"]>;
+    }
+  }
+
   async createOne(item: Partial<Schema>): Promise<InsertOneResult> {
     this.sanitize(item);
     item.dateCreated = new Date();
@@ -65,65 +73,51 @@ export default class DocCollection<Schema extends BaseDoc> {
   }
 
   async readOne(filter: Filter<Schema>, options?: FindOptions): Promise<Schema | null> {
+    this.sanitizeFilter(filter);
+    console.log(filter._id);
     return await this.collection.findOne<Schema>(filter, options);
   }
 
-  async readOneById(_id: ObjectId | string, options?: FindOptions): Promise<Schema | null> {
-    return await this.readOne({ _id: new ObjectId(_id) } as Filter<Schema>, options);
-  }
-
   async readMany(filter: Filter<Schema>, options?: FindOptions): Promise<Schema[]> {
+    this.sanitizeFilter(filter);
     return await this.collection.find<Schema>(filter, options).toArray();
   }
 
   async replaceOne(filter: Filter<Schema>, item: Partial<Schema>, options?: ReplaceOptions): Promise<UpdateResult<Schema> | Document> {
+    this.sanitizeFilter(filter);
     this.sanitize(item);
     return await this.collection.replaceOne(filter, item as WithoutId<Schema>, options);
   }
 
-  async replaceOneById(_id: ObjectId | string, item: Partial<Schema>, options?: ReplaceOptions): Promise<UpdateResult<Schema> | Document> {
-    this.sanitize(item);
-    return await this.collection.replaceOne({ _id: new ObjectId(_id) } as Filter<Schema>, item as WithoutId<Schema>, options);
-  }
-
   async updateOne(filter: Filter<Schema>, update: Partial<Schema>, options?: FindOneAndUpdateOptions): Promise<UpdateResult<Schema>> {
     this.sanitize(update);
+    this.sanitizeFilter(filter);
     update.dateUpdated = new Date();
     return await this.collection.updateOne(filter, { $set: update }, options);
   }
 
-  async updateOneById(_id: ObjectId | string, update: Partial<Schema>, options?: FindOneAndUpdateOptions): Promise<UpdateResult<Schema>> {
-    this.sanitize(update);
-    update.dateUpdated = new Date();
-    return await this.collection.updateOne({ _id: new ObjectId(_id) } as Filter<Schema>, { $set: update }, options);
-  }
-
   async deleteOne(filter: Filter<Schema>, options?: DeleteOptions): Promise<DeleteResult> {
+    this.sanitizeFilter(filter);
     return await this.collection.deleteOne(filter, options);
   }
 
-  async deleteOneById(_id: ObjectId | string, options?: DeleteOptions): Promise<DeleteResult> {
-    return await this.collection.deleteOne({ _id: new ObjectId(_id) } as Filter<Schema>, options);
-  }
-
   async deleteMany(filter: Filter<Schema>, options?: DeleteOptions): Promise<DeleteResult> {
+    this.sanitizeFilter(filter);
     return await this.collection.deleteMany(filter, options);
   }
 
   async count(filter: Filter<Schema>, options?: CountDocumentsOptions): Promise<number> {
+    this.sanitizeFilter(filter);
     return await this.collection.countDocuments(filter, options);
   }
 
   async popOne(filter: Filter<Schema>): Promise<Schema | null> {
+    this.sanitizeFilter(filter);
     const one = await this.readOne(filter);
     if (one === null) {
       return null;
     }
     await this.deleteOne({ _id: one._id } as Filter<Schema>);
     return one;
-  }
-
-  async popOneById(_id: ObjectId | string): Promise<Schema | null> {
-    return this.popOne({ _id: new ObjectId(_id) } as Filter<Schema>);
   }
 }
