@@ -19,16 +19,16 @@ export class Router {
     this.errorHandlers.set(etype as new (...args: never[]) => Error, handler as (e: Error) => Error | Promise<Error>);
   }
 
-  private static async handleError(e: Error) {
+  private static async handleError(err: Error) {
     try {
       for (const [etype, handler] of this.errorHandlers) {
-        if (e instanceof etype) {
-          return await handler(e);
+        if (err instanceof etype) {
+          return await handler(err);
         }
       }
-      return e;
-    } catch (e) {
-      return e;
+      return err;
+    } catch (e: unknown) {
+      return new Error(`While handling below error:\n${err}\n\nAnother error occurred:\n${e}`);
     }
   }
 
