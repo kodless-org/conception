@@ -104,10 +104,11 @@ export class Router {
   }
 
   private static httpDecorator(method: HttpMethod, route: string) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return function (target: any, propertyKey: string) {
-      Reflect.defineMetadata("method", method, target, propertyKey);
-      Reflect.defineMetadata("path", route, target, propertyKey);
+    return function (originalMethod: Function, context: ClassMethodDecoratorContext<Object>) {
+      context.addInitializer(function () {
+        Reflect.defineMetadata("method", method, this, context.name);
+        Reflect.defineMetadata("path", route, this, context.name);
+      });
     };
   }
 }
