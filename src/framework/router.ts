@@ -120,10 +120,13 @@ export class Router {
   }
 
   private static httpDecorator(method: HttpMethod, route: string) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return function (target: any, propertyKey: string) {
-      Reflect.defineMetadata("method", method, target, propertyKey);
-      Reflect.defineMetadata("path", route, target, propertyKey);
+    return function (originalMethod: Function, context: ClassMethodDecoratorContext<Object>) {
+      context.addInitializer(function () {
+        // For each method decorated with this decorator, save the method and path metadata.
+        // This metadata can be accessed later to build the express router.
+        Reflect.defineMetadata("method", method, this, context.name);
+        Reflect.defineMetadata("path", route, this, context.name);
+      });
     };
   }
 }
