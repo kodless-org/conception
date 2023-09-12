@@ -1,6 +1,5 @@
 import { ObjectId } from "mongodb";
-import Concept from "../framework/concept";
-import { BaseDoc } from "../framework/doc";
+import DocCollection, { BaseDoc } from "../framework/doc";
 import { NotAllowedError, NotFoundError } from "./errors";
 
 export interface FriendshipDoc extends BaseDoc {
@@ -14,25 +13,28 @@ export interface FriendRequestDoc extends BaseDoc {
   status: "pending" | "rejected" | "accepted";
 }
 
-export default class FriendConcept extends Concept<{ friends: FriendshipDoc; requests: FriendRequestDoc }> {
+export default class FriendConcept {
+  public readonly friends = new DocCollection<FriendshipDoc>("friends");
+  public readonly requests = new DocCollection<FriendRequestDoc>("friendRequests");
+
   async getRequests(userId: ObjectId) {
-    return await this.db.requests.readMany({
+    return await this.requests.readMany({
       $or: [{ from: userId }, { to: userId }],
     });
   }
 
   async sendRequest(from: ObjectId, to: ObjectId) {
     await this.canSendRequest(from, to);
-    await this.db.requests.createOne({ from, to, status: "pending" });
+    await this.requests.createOne({ from, to, status: "pending" });
     return { msg: "Sent request!" };
   }
 
   async respondRequest(from: ObjectId, to: ObjectId, response: "accepted" | "rejected") {
-    const request = await this.db.requests.popOne({ from, to, status: "pending" });
+    const request = await this.requests.popOne({ from, to, status: "pending" });
     if (request === null) {
-      throw new NotFoundError(`There was no pending request from ${from} to ${to}!`);
+      throw new FriendRequestNotFoundError(from, to);
     }
-    void this.db.requests.createOne({ from, to, status: response });
+    void this.requests.createOne({ from, to, status: response });
 
     // if accepted, add a new friend
     if (response === "accepted") {
@@ -43,62 +45,95 @@ export default class FriendConcept extends Concept<{ friends: FriendshipDoc; req
   }
 
   async removeRequest(from: ObjectId, to: ObjectId) {
-    const request = await this.db.requests.popOne({ from, to, status: "pending" });
+    const request = await this.requests.popOne({ from, to, status: "pending" });
     if (request === null) {
-      throw new NotFoundError(`No pending request existed from ${from} to ${to}!`);
+      throw new FriendRequestNotFoundError(from, to);
     }
     return { msg: "Removed request!" };
   }
 
   async removeFriend(user: ObjectId, friend: ObjectId) {
-    const friendship = await this.db.friends.popOne({
+    const friendship = await this.friends.popOne({
       $or: [
         { user1: user, user2: friend },
         { user1: friend, user2: user },
       ],
     });
     if (friendship === null) {
-      throw new NotFoundError(`${user} was not friends with ${friend}!`);
+      throw new FriendNotFoundError(user, friend);
     }
     return { msg: "Unfriended!" };
   }
 
   async getFriends(user: ObjectId) {
-    const friendships = await this.db.friends.readMany({
+    const friendships = await this.friends.readMany({
       $or: [{ user1: user }, { user2: user }],
     });
     return friendships.map((friendship) => (friendship.user1 === user ? friendship.user2 : friendship.user1));
   }
 
   private async addFriend(user1: ObjectId, user2: ObjectId) {
-    void this.db.friends.createOne({ user1, user2 });
+    void this.friends.createOne({ user1, user2 });
   }
 
   private async isNotFriends(u1: ObjectId, u2: ObjectId) {
-    const friendship = await this.db.friends.readOne({
+    const friendship = await this.friends.readOne({
       $or: [
         { user1: u1, user2: u2 },
         { user1: u2, user2: u1 },
       ],
     });
-    if (friendship !== null) {
-      throw new NotAllowedError(`${u1} and ${u2} users are already friends!`);
+    if (friendship !== null || u1 === u2) {
+      throw new AlreadyFriendsError(u1, u2);
     }
   }
 
   private async canSendRequest(u1: ObjectId, u2: ObjectId) {
-    if (u1 === u2) {
-      throw new NotAllowedError(":)");
-    }
     await this.isNotFriends(u1, u2);
     // check if there is pending request between these users
-    const request = await this.db.requests.readOne({
+    const request = await this.requests.readOne({
       from: { $in: [u1, u2] },
       to: { $in: [u1, u2] },
       status: "pending",
     });
     if (request !== null) {
-      throw new NotAllowedError(`There is already a friend request between ${u1} and ${u2}!`);
+      throw new FriendRequestAlreadyExistsError(u1, u2);
     }
+  }
+}
+
+export class FriendRequestNotFoundError extends NotFoundError {
+  constructor(
+    public readonly from: ObjectId,
+    public readonly to: ObjectId,
+  ) {
+    super("Friend request from {0} to {1} does not exist!", from, to);
+  }
+}
+
+export class FriendRequestAlreadyExistsError extends NotAllowedError {
+  constructor(
+    public readonly from: ObjectId,
+    public readonly to: ObjectId,
+  ) {
+    super("Friend request from {0} to {1} already exists!", from, to);
+  }
+}
+
+export class FriendNotFoundError extends NotFoundError {
+  constructor(
+    public readonly user1: ObjectId,
+    public readonly user2: ObjectId,
+  ) {
+    super("Friendship between {0} and {1} does not exist!", user1, user2);
+  }
+}
+
+export class AlreadyFriendsError extends NotAllowedError {
+  constructor(
+    public readonly user1: ObjectId,
+    public readonly user2: ObjectId,
+  ) {
+    super("{0} and {1} are already friends!", user1, user2);
   }
 }

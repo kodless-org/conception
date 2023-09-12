@@ -1,6 +1,5 @@
 import { ObjectId } from "mongodb";
-import Concept from "../framework/concept";
-import { BaseDoc } from "../framework/doc";
+import DocCollection, { BaseDoc } from "../framework/doc";
 import { BadValuesError, NotAllowedError, NotFoundError } from "./errors";
 
 export interface UserDoc extends BaseDoc {
@@ -9,24 +8,36 @@ export interface UserDoc extends BaseDoc {
   profilePictureUrl?: string;
 }
 
-export default class UserConcept extends Concept<{ users: UserDoc }> {
+export default class UserConcept {
+  public readonly users = new DocCollection<UserDoc>("users");
+
   async create(username: string, password: string) {
     await this.canCreate(username, password);
-    const _id = (await this.db.users.createOne({ username, password })).insertedId;
-    return { msg: "User created successfully!", user: await this.db.users.readOneById(_id) };
+    const _id = (await this.users.createOne({ username, password })).insertedId;
+    return { msg: "User created successfully!", user: await this.users.readOneById(_id) };
+  }
+
+  private sanitizeUser(user: UserDoc) {
+    // eslint-disable-next-line
+    const { password, ...rest } = user; // remove password
+    return rest;
+  }
+
+  async getUserById(_id: ObjectId) {
+    const user = await this.users.readOneById(_id);
+    if (user === null) {
+      throw new NotFoundError(`User not found!`);
+    }
+    return this.sanitizeUser(user);
   }
 
   async getUsers(username?: string) {
-    const users = (await this.db.users.readMany(username ? { username } : {})).map((user) => {
-      // eslint-disable-next-line
-      const { password, ...rest } = user; // remove password
-      return rest;
-    });
-    return { users: users };
+    const users = (await this.users.readMany(username ? { username } : {})).map(this.sanitizeUser);
+    return { users };
   }
 
   async logIn(username: string, password: string) {
-    const user = await this.db.users.readOne({ username, password });
+    const user = await this.users.readOne({ username, password });
     if (!user) {
       throw new NotAllowedError("Username or password is incorrect.");
     }
@@ -41,17 +52,17 @@ export default class UserConcept extends Concept<{ users: UserDoc }> {
     if (update.username !== undefined) {
       await this.isUsernameUnique(update.username);
     }
-    await this.db.users.updateOneById(_id, update);
+    await this.users.updateOneById(_id, update);
     return { msg: "User updated successfully!" };
   }
 
   async delete(user: ObjectId) {
-    await this.db.users.deleteOneById(user);
+    await this.users.deleteOneById(user);
     return { msg: "User deleted!" };
   }
 
   async userExists(_id: ObjectId) {
-    const maybeUser = await this.db.users.readOneById(_id);
+    const maybeUser = await this.users.readOneById(_id);
     if (maybeUser === null) {
       throw new NotFoundError(`User not found!`);
     }
@@ -65,7 +76,7 @@ export default class UserConcept extends Concept<{ users: UserDoc }> {
   }
 
   private async isUsernameUnique(username: string) {
-    if (await this.db.users.readOne({ username })) {
+    if (await this.users.readOne({ username })) {
       throw new NotAllowedError(`User with username ${username} already exists!`);
     }
   }
