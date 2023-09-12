@@ -1,6 +1,5 @@
 import { SessionData } from "express-session";
 import { ObjectId } from "mongodb";
-import Concept from "../framework/concept";
 import { NotAllowedError, UnauthenticatedError } from "./errors";
 
 export type WebSessionDoc = SessionData;
@@ -12,7 +11,7 @@ declare module "express-session" {
   }
 }
 
-export default class WebSessionConcept extends Concept<{}> {
+export default class WebSessionConcept {
   setUser(session: WebSessionDoc, user: ObjectId | undefined) {
     session.user = user;
   }
