@@ -118,7 +118,6 @@ class Routes {
 }
 
 Router.registerError(FreetAuthorNotMatchError, async (e) => {
-  console.log(e);
   const username = (await User.getUserById(e.author)).username;
   return e.formatWith(username, e._id);
 });

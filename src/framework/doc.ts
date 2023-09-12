@@ -74,7 +74,6 @@ export default class DocCollection<Schema extends BaseDoc> {
 
   async readOne(filter: Filter<Schema>, options?: FindOptions): Promise<Schema | null> {
     this.sanitizeFilter(filter);
-    console.log(filter._id);
     return await this.collection.findOne<Schema>(filter, options);
   }
 
