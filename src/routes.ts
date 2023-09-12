@@ -2,10 +2,10 @@ import { Filter, ObjectId } from "mongodb";
 
 import { Router, getExpressRouter } from "./framework/router";
 
-import { Freet, Friend, User, WebSession } from "./app";
+import { Friend, Post, User, WebSession } from "./app";
 import { BadValuesError } from "./concepts/errors";
-import { FreetAuthorNotMatchError, FreetDoc, FreetOptions } from "./concepts/freet";
 import { AlreadyFriendsError, FriendNotFoundError, FriendRequestAlreadyExistsError, FriendRequestNotFoundError } from "./concepts/friend";
+import { PostAuthorNotMatchError, PostDoc, PostOptions } from "./concepts/post";
 import { UserDoc } from "./concepts/user";
 import { WebSessionDoc } from "./concepts/websession";
 
@@ -39,8 +39,8 @@ class Routes {
     WebSession.isLoggedOut(session);
     const u = await User.logIn(username, password);
     WebSession.setUser(session, u._id);
-    const f = await Freet.create(u._id, "Hi, I logged in!");
-    return { msg: "Logged in and freeted!", user: u, freet: f };
+    const f = await Post.create(u._id, "Hi, I logged in!");
+    return { msg: "Logged in and posted!", user: u, post: f };
   }
 
   @Router.post("/logout")
@@ -48,33 +48,33 @@ class Routes {
     WebSession.isLoggedIn(session);
     const user = WebSession.getUser(session);
     WebSession.setUser(session, undefined);
-    const f = await Freet.create(user, "Bye bye, logging off!");
-    return { msg: "Logged out and freeted!", freet: f };
+    const f = await Post.create(user, "Bye bye, logging off!");
+    return { msg: "Logged out and posted!", post: f };
   }
 
-  @Router.get("/freets")
-  async getFreets(query: Filter<FreetDoc>) {
-    return await Freet.read(query);
+  @Router.get("/posts")
+  async getPosts(query: Filter<PostDoc>) {
+    return await Post.read(query);
   }
 
-  @Router.post("/freets")
-  async createFreet(session: WebSessionDoc, author: ObjectId, content: string, options?: FreetOptions) {
+  @Router.post("/posts")
+  async createPost(session: WebSessionDoc, author: ObjectId, content: string, options?: PostOptions) {
     const user = WebSession.getUser(session);
-    return await Freet.create(user, content, options);
+    return await Post.create(user, content, options);
   }
 
-  @Router.patch("/freets/:_id")
-  async updateFreet(session: WebSessionDoc, _id: ObjectId, update: Partial<FreetDoc>) {
+  @Router.patch("/posts/:_id")
+  async updatePost(session: WebSessionDoc, _id: ObjectId, update: Partial<PostDoc>) {
     const user = WebSession.getUser(session);
-    await Freet.isAuthorMatch(user, _id);
-    return await Freet.update(_id, update);
+    await Post.isAuthorMatch(user, _id);
+    return await Post.update(_id, update);
   }
 
-  @Router.delete("/freets/:_id")
-  async deleteFreet(session: WebSessionDoc, _id: ObjectId) {
+  @Router.delete("/posts/:_id")
+  async deletePost(session: WebSessionDoc, _id: ObjectId) {
     const user = WebSession.getUser(session);
-    await Freet.isAuthorMatch(user, _id);
-    return Freet.delete(_id);
+    await Post.isAuthorMatch(user, _id);
+    return Post.delete(_id);
   }
 
   @Router.get("/friends/:user")
@@ -117,7 +117,7 @@ class Routes {
   }
 }
 
-Router.registerError(FreetAuthorNotMatchError, async (e) => {
+Router.registerError(PostAuthorNotMatchError, async (e) => {
   const username = (await User.getUserById(e.author)).username;
   return e.formatWith(username, e._id);
 });
