@@ -1,6 +1,8 @@
 // Create an error class extending from Error that also maintains a formattable string
 // that can easily be used to replace values inside.
 class FormattableError extends Error {
+  public HTTP_CODE: number = 500;
+
   constructor(
     public readonly format: string,
     ...args: unknown[]
@@ -13,7 +15,9 @@ class FormattableError extends Error {
   }
 
   formatWith(...args: unknown[]) {
-    return new FormattableError(this.format, ...args);
+    const e = new FormattableError(this.format, ...args);
+    e.HTTP_CODE = this.HTTP_CODE;
+    return e;
   }
 }
 
