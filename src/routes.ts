@@ -80,25 +80,25 @@ class Routes {
 
   @Router.get("/friends/:user")
   async getFriends(user: ObjectId) {
-    return await User.idsToUsernames(await Friend.getFriends(user));
+    return await User.idsToUsernames(await Friend.FriendConcept.getFriends(user));
   }
 
   @Router.delete("/friends/:friend")
   async removeFriend(session: WebSessionDoc, friend: ObjectId) {
     const user = WebSession.getUser(session);
-    await Friend.removeFriend(user, friend);
+    await Friend.FriendConcept.removeFriend(user, friend);
   }
 
   @Router.get("/requests")
   async getRequests(session: WebSessionDoc) {
     const user = WebSession.getUser(session);
-    return await Responses.friendRequests(await Friend.getRequests(user));
+    return await Responses.friendRequests(await Friend.RequestConcept.getRequests(user));
   }
 
   @Router.delete("/requests/:to")
   async removeFriendRequest(session: WebSessionDoc, to: ObjectId) {
     const user = WebSession.getUser(session);
-    return await Friend.removeRequest(user, to);
+    return await Friend.RequestConcept.removeRequest(user, to);
   }
 
   @Router.put("/requests/:from")

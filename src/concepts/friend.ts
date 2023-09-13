@@ -7,15 +7,14 @@ export interface FriendshipDoc extends BaseDoc {
   user2: ObjectId;
 }
 
-export interface FriendRequestDoc extends BaseDoc {
+export interface RequestDoc extends BaseDoc {
   from: ObjectId;
   to: ObjectId;
   status: "pending" | "rejected" | "accepted";
 }
 
-export default class FriendConcept {
-  public readonly friends = new DocCollection<FriendshipDoc>("friends");
-  public readonly requests = new DocCollection<FriendRequestDoc>("friendRequests");
+export class RequestConcept {
+  public readonly requests = new DocCollection<RequestDoc>("friendRequests");
 
   async getRequests(userId: ObjectId) {
     return await this.requests.readMany({
@@ -24,7 +23,7 @@ export default class FriendConcept {
   }
 
   async sendRequest(from: ObjectId, to: ObjectId) {
-    await this.canSendRequest(from, to);
+    // await this.canSendRequest(from, to);
     await this.requests.createOne({ from, to, status: "pending" });
     return { msg: "Sent request!" };
   }
@@ -36,10 +35,7 @@ export default class FriendConcept {
     }
     void this.requests.createOne({ from, to, status: response });
 
-    // if accepted, add a new friend
-    if (response === "accepted") {
-      void this.addFriend(from, to);
-    }
+    //if accepted add a new friend
 
     return { msg: `Responded with ${response}!` };
   }
@@ -51,6 +47,10 @@ export default class FriendConcept {
     }
     return { msg: "Removed request!" };
   }
+}
+
+export class FriendConcept {
+  public readonly friends = new DocCollection<FriendshipDoc>("friends");
 
   async removeFriend(user: ObjectId, friend: ObjectId) {
     const friendship = await this.friends.popOne({
@@ -72,11 +72,11 @@ export default class FriendConcept {
     return friendships.map((friendship) => (friendship.user1 === user ? friendship.user2 : friendship.user1));
   }
 
-  private async addFriend(user1: ObjectId, user2: ObjectId) {
+  async addFriend(user1: ObjectId, user2: ObjectId) {
     void this.friends.createOne({ user1, user2 });
   }
 
-  private async isNotFriends(u1: ObjectId, u2: ObjectId) {
+  async isNotFriends(u1: ObjectId, u2: ObjectId) {
     const friendship = await this.friends.readOne({
       $or: [
         { user1: u1, user2: u2 },
@@ -87,11 +87,18 @@ export default class FriendConcept {
       throw new AlreadyFriendsError(u1, u2);
     }
   }
+}
+
+export default class FriendWithRequestConcept {
+  constructor(
+    public readonly RequestConcept: RequestConcept,
+    public readonly FriendConcept: FriendConcept,
+  ) {}
 
   private async canSendRequest(u1: ObjectId, u2: ObjectId) {
-    await this.isNotFriends(u1, u2);
+    await this.FriendConcept.isNotFriends(u1, u2);
     // check if there is pending request between these users
-    const request = await this.requests.readOne({
+    const request = await this.RequestConcept.requests.readOne({
       from: { $in: [u1, u2] },
       to: { $in: [u1, u2] },
       status: "pending",
@@ -99,6 +106,17 @@ export default class FriendConcept {
     if (request !== null) {
       throw new FriendRequestAlreadyExistsError(u1, u2);
     }
+  }
+
+  public async sendRequest(from: ObjectId, to: ObjectId) {
+    await this.canSendRequest(from, to);
+    await this.RequestConcept.sendRequest(from, to);
+  }
+
+  public async respondRequest(from: ObjectId, to: ObjectId, response: "accepted" | "rejected") {
+    const requestResult = await this.RequestConcept.respondRequest(from, to, response);
+    await this.FriendConcept.addFriend(from, to);
+    return requestResult;
   }
 }
 
