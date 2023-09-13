@@ -11,10 +11,10 @@
     "strict": true,
     "skipLibCheck": true,
 
-    "rootDir": "src/",
+    "rootDir": "./",
     "baseUrl": "src/",
     "outDir": "dist/"
   },
-  "include": ["src/**/*.ts"],
+  "include": ["src/**/*.ts", "public/*.ts"],
   "exclude": ["node_modules", ".vscode"]
 }

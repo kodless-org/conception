@@ -11,8 +11,26 @@ export type HttpMethod = "all" | "get" | "post" | "put" | "delete" | "patch" | "
  */
 export class Router {
   public readonly expressRouter = express.Router();
+  private static readonly errorHandlers: Map<new (...args: never[]) => Error, (e: Error) => Error | Promise<Error>> = new Map();
 
   constructor() {}
+
+  public static registerError<EType>(etype: new (...args: never[]) => EType, handler: (e: EType) => Error | Promise<Error>) {
+    this.errorHandlers.set(etype as new (...args: never[]) => Error, handler as (e: Error) => Error | Promise<Error>);
+  }
+
+  private static async handleError(err: Error) {
+    try {
+      for (const [etype, handler] of this.errorHandlers) {
+        if (err instanceof etype) {
+          return await handler(err);
+        }
+      }
+      return err;
+    } catch (e: unknown) {
+      return new Error(`While handling below error:\n${err}\n\nAnother error occurred:\n${e}`);
+    }
+  }
 
   public registerRoute(method: HttpMethod, path: string, action: Function) {
     this.expressRouter[method](path, this.makeRoute(action));
@@ -66,9 +84,8 @@ export class Router {
         if (result instanceof Promise) {
           result = await result;
         }
-        // eslint-disable-next-line
-      } catch (e: any) {
-        const error = e as Error & { HTTP_CODE?: number };
+      } catch (e: unknown) {
+        const error = (await Router.handleError(e as Error)) as Error & { HTTP_CODE?: number };
         res.status(error.HTTP_CODE ?? 500).json({ msg: error.message ?? "Internal Server Error" });
         return;
       }
@@ -104,6 +121,8 @@ export class Router {
   private static httpDecorator(method: HttpMethod, route: string) {
     return function (originalMethod: Function, context: ClassMethodDecoratorContext<Object>) {
       context.addInitializer(function () {
+        // For each method decorated with this decorator, save the method and path metadata.
+        // This metadata can be accessed later to build the express router.
         Reflect.defineMetadata("method", method, this, context.name);
         Reflect.defineMetadata("path", route, this, context.name);
       });

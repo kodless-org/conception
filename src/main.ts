@@ -3,6 +3,7 @@ import dotenv from "dotenv";
 import express from "express";
 import session from "express-session";
 import logger from "morgan";
+import * as path from "path";
 
 // The following line sets up the environment variables before everything else.
 dotenv.config();
@@ -29,6 +30,8 @@ app.use(
   }),
 );
 
+app.use(express.static(path.join(__dirname, "../../public")));
+app.use(express.static(path.join(__dirname, "../public")));
 app.use("/api", router);
 
 // For all unrecognized requests, return a not found message.
