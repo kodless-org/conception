@@ -78,10 +78,16 @@ async function request(method: HttpMethod, endpoint: string, params?: unknown) {
       credentials: "same-origin",
       body: params ? JSON.stringify(params) : undefined,
     });
-    return await (await res).json();
+    return {
+      statusCode: (await res).status,
+      response: await (await res).json(),
+    };
   } catch (e) {
     console.log(e);
-    return { error: "Something went wrong, check your console log." };
+    return {
+      statusCode: "???",
+      response: { error: "Something went wrong, check your console log." },
+    };
   }
 }
 
@@ -128,7 +134,8 @@ document.addEventListener("DOMContentLoaded", () => {
       });
 
       const response = await request($method as HttpMethod, endpoint as string, Object.keys(reqData).length > 0 ? reqData : undefined);
-      document.querySelector("#response-text")!.innerHTML = JSON.stringify(response, null, 2);
+      document.querySelector("#response-text")!.innerHTML = JSON.stringify(response.response, null, 2);
+      document.querySelector("#status-code")!.innerHTML = "(" + response.statusCode.toString() + ")";
     }),
   );
 });
