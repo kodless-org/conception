@@ -30,12 +30,12 @@ export default class PostConcept {
 
   async update(_id: ObjectId, update: Partial<PostDoc>) {
     await this.posts.updateOne({ _id }, update);
-    return { msg: "Post successfully updated!", post: await this.posts.readOne({ _id }) };
+    return { msg: "Post successfully updated!" };
   }
 
   async delete(_id: ObjectId) {
-    const post = await this.posts.popOne({ _id });
-    return { msg: "Post deleted successfully!", post };
+    await this.posts.deleteOne({ _id });
+    return { msg: "Post deleted successfully!" };
   }
 
   async isAuthorMatch(user: ObjectId, _id: ObjectId) {

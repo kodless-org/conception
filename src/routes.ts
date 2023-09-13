@@ -4,10 +4,44 @@ import { Router, getExpressRouter } from "./framework/router";
 
 import { Friend, Post, User, WebSession } from "./app";
 import { BadValuesError } from "./concepts/errors";
-import { AlreadyFriendsError, FriendNotFoundError, FriendRequestAlreadyExistsError, FriendRequestNotFoundError } from "./concepts/friend";
+import { AlreadyFriendsError, FriendNotFoundError, FriendRequestAlreadyExistsError, FriendRequestDoc, FriendRequestNotFoundError } from "./concepts/friend";
 import { PostAuthorNotMatchError, PostDoc, PostOptions } from "./concepts/post";
 import { UserDoc } from "./concepts/user";
 import { WebSessionDoc } from "./concepts/websession";
+
+/**
+ * This class does useful conversions for the frontend.
+ * For example, it converts a {@link PostDoc} into a more readable format for the frontend.
+ */
+class Responses {
+  /**
+   * Convert PostDoc into more readable format for the frontend by converting the author id into a username.
+   */
+  static async post(post: PostDoc | null) {
+    if (!post) {
+      return post;
+    }
+    const author = await User.getUserById(post.author);
+    return { ...post, author: author.username };
+  }
+
+  /**
+   * Same as {@link makePostResponse} but for an array of PostDoc for improved performance.
+   */
+  static async posts(posts: PostDoc[]) {
+    const authors = await User.idsToUsernames(posts.map((post) => post.author));
+    return posts.map((post, i) => ({ ...post, author: authors[i] }));
+  }
+
+  /**
+   * Convert FriendRequestDoc into more readable format for the frontend
+   * by converting the ids into usernames.
+   */
+  static async friendRequests(requests: FriendRequestDoc[]) {
+    const usernames = await User.idsToUsernames(requests.map((request) => request.from).concat(requests.map((request) => request.to)));
+    return requests.map((request, i) => ({ ...request, from: usernames[i], to: usernames[i + requests.length] }));
+  }
+}
 
 class Routes {
   @Router.get("/users")
@@ -40,7 +74,7 @@ class Routes {
     const u = await User.logIn(username, password);
     WebSession.setUser(session, u._id);
     const f = await Post.create(u._id, "Hi, I logged in!");
-    return { msg: "Logged in and posted!", user: u, post: f };
+    return { msg: "Logged in and posted!", user: u, post: await Responses.post(f.post) };
   }
 
   @Router.post("/logout")
@@ -49,18 +83,19 @@ class Routes {
     const user = WebSession.getUser(session);
     WebSession.setUser(session, undefined);
     const f = await Post.create(user, "Bye bye, logging off!");
-    return { msg: "Logged out and posted!", post: f };
+    return { msg: "Logged out and posted!", post: await Responses.post(f.post) };
   }
 
   @Router.get("/posts")
   async getPosts(query: Filter<PostDoc>) {
-    return await Post.read(query);
+    return Responses.posts((await Post.read(query)).posts);
   }
 
   @Router.post("/posts")
   async createPost(session: WebSessionDoc, author: ObjectId, content: string, options?: PostOptions) {
     const user = WebSession.getUser(session);
-    return await Post.create(user, content, options);
+    const created = await Post.create(user, content, options);
+    return { msg: created.msg, post: await Responses.post(created.post) };
   }
 
   @Router.patch("/posts/:_id")
@@ -79,7 +114,7 @@ class Routes {
 
   @Router.get("/friends/:user")
   async getFriends(user: ObjectId) {
-    return await Friend.getFriends(user);
+    return await User.idsToUsernames(await Friend.getFriends(user));
   }
 
   @Router.delete("/friends/:friend")
@@ -91,7 +126,7 @@ class Routes {
   @Router.get("/requests")
   async getRequests(session: WebSessionDoc) {
     const user = WebSession.getUser(session);
-    return await Friend.getRequests(user);
+    return await Responses.friendRequests(await Friend.getRequests(user));
   }
 
   @Router.delete("/requests/:to")

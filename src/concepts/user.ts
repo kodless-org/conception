@@ -31,6 +31,11 @@ export default class UserConcept {
     return this.sanitizeUser(user);
   }
 
+  async idsToUsernames(ids: ObjectId[]) {
+    const users = await this.users.readMany({ _id: { $in: ids } });
+    return users.map((user) => user.username);
+  }
+
   async getUsers(username?: string) {
     const users = (await this.users.readMany(username ? { username } : {})).map(this.sanitizeUser);
     return { users };
