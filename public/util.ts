@@ -12,8 +12,32 @@ const operations = [
     fields: { username: "input", password: "input" },
   },
   {
-    name: "Get Users",
+    name: "Logout",
+    endpoint: "/api/logout",
+    method: "POST",
+    fields: {},
+  },
+  {
+    name: "Update User",
     endpoint: "/api/users",
+    method: "PATCH",
+    fields: { update: "json" },
+  },
+  {
+    name: "Delete User",
+    endpoint: "/api/users",
+    method: "DELETE",
+    fields: {},
+  },
+  {
+    name: "Get Users (empty for all)",
+    endpoint: "/api/users",
+    method: "GET",
+    fields: { username: "input" },
+  },
+  {
+    name: "Get Posts",
+    endpoint: "/api/posts",
     method: "GET",
     fields: {},
   },
@@ -24,25 +48,35 @@ const operations = [
     fields: { content: "textarea" },
   },
   {
-    name: "Get Posts",
-    endpoint: "/api/posts",
-    method: "GET",
-    fields: {},
+    name: "Update Post",
+    endpoint: "/api/posts/:id",
+    method: "PATCH",
+    fields: { id: "input", update: "json" },
+  },
+  {
+    name: "Delete Post",
+    endpoint: "/api/posts/:id",
+    method: "DELETE",
+    fields: { id: "input" },
   },
 ];
 
 const API_URL = "http://localhost:3000";
 type HttpMethod = "GET" | "POST" | "PUT" | "DELETE" | "PATCH";
 
-async function request(method: HttpMethod, endpoint: string, body?: unknown) {
+async function request(method: HttpMethod, endpoint: string, params?: unknown) {
   try {
+    if (method === "GET" && params) {
+      endpoint += "?" + new URLSearchParams(params as Record<string, string>).toString();
+      params = undefined;
+    }
     const res = fetch(API_URL + endpoint, {
       method,
       headers: {
         "Content-Type": "application/json",
       },
       credentials: "same-origin",
-      body: body ? JSON.stringify(body) : undefined,
+      body: params ? JSON.stringify(params) : undefined,
     });
     return await (await res).json();
   } catch (e) {
@@ -60,9 +94,10 @@ function getHtmlOperations() {
         <input type="hidden" name="$method" value="${operation.method}" />
         ${Object.entries(operation.fields)
           .map(([name, type]) => {
+            const tag = type === "json" ? "textarea" : type;
             return `<div class="field">
               <label for="${name}">${name}</label>
-              <${type} name="${name}" id="${name}"></${type}>
+              <${tag} name="${name}" id="${name}"></${tag}>
             </div>`;
           })
           .join("")}
@@ -79,7 +114,20 @@ document.addEventListener("DOMContentLoaded", () => {
       e.preventDefault();
       const form = e.target as HTMLFormElement;
       const { $method, $endpoint, ...reqData } = Object.fromEntries(new FormData(form));
-      const response = await request($method as HttpMethod, $endpoint as string, Object.keys(reqData).length > 0 ? reqData : undefined);
+      const endpoint = ($endpoint as string).replace(/:(\w+)/g, (_, key) => reqData[key] as string);
+
+      // If field is json, parse it
+      Object.entries(reqData).forEach(([key, value]) => {
+        try {
+          if ((operations.find((o) => o.endpoint === $endpoint)?.fields as Record<string, string>)[key] === "json") {
+            reqData[key] = JSON.parse(value as string);
+          }
+        } catch (e) {
+          console.log(e);
+        }
+      });
+
+      const response = await request($method as HttpMethod, endpoint as string, Object.keys(reqData).length > 0 ? reqData : undefined);
       document.querySelector("#response-text")!.innerHTML = JSON.stringify(response, null, 2);
     }),
   );
