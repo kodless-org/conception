@@ -41,17 +41,11 @@ export default class PostConcept {
   async isAuthorMatch(user: ObjectId, _id: ObjectId) {
     const post = await this.posts.readOne({ _id });
     if (!post) {
-      throw new PostNotFoundError(_id);
+      throw new NotFoundError(`Post ${_id} does not exist!`);
     }
     if (post.author.toString() !== user.toString()) {
       throw new PostAuthorNotMatchError(user, _id);
     }
-  }
-}
-
-export class PostNotFoundError extends NotFoundError {
-  constructor(public readonly _id: ObjectId) {
-    super("Post {0} does not exist!", _id);
   }
 }
 
