@@ -6,8 +6,41 @@ import { getParamNames } from "./utils";
 export type HttpMethod = "all" | "get" | "post" | "put" | "delete" | "patch" | "options" | "head";
 
 /**
+ * A formattable error. Use `{0}`, `{1}`, etc. in the error message to format it with the arguments passed to the constructor.
+ * The `formatWith` method can be used to create a new error with the same format but different arguments.
+ *
+ * Example:
+ * ```
+ * let error = new FormattableError("{0} is not the author of post {1}!", author, _id);
+ * let errorWithUsername = e.formatWith(username, _id);
+ * ```
+ */
+export class FormattableError extends Error {
+  public HTTP_CODE: number = 500;
+
+  constructor(
+    public readonly format: string,
+    ...args: unknown[]
+  ) {
+    super(
+      format.replace(/{(\d+)}/g, (match, number) => {
+        return typeof args[number] !== "undefined" ? (args[number] as string) : match;
+      }),
+    );
+  }
+
+  formatWith(...args: unknown[]) {
+    const e = new FormattableError(this.format, ...args);
+    e.HTTP_CODE = this.HTTP_CODE;
+    return e;
+  }
+}
+
+/**
  * This class an abstraction over the express router, used to decorate methods in your concept classes.
  * It will automatically convert actions into express handlers.
+ *
+ * For error handling, `message` and `HTTP_CODE` properties of errors are used to send responses.
  */
 export class Router {
   public readonly expressRouter = express.Router();
