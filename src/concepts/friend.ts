@@ -17,9 +17,9 @@ export default class FriendConcept {
   public readonly friends = new DocCollection<FriendshipDoc>("friends");
   public readonly requests = new DocCollection<FriendRequestDoc>("friendRequests");
 
-  async getRequests(userId: ObjectId) {
+  async getRequests(user: ObjectId) {
     return await this.requests.readMany({
-      $or: [{ from: userId }, { to: userId }],
+      $or: [{ from: user }, { to: user }],
     });
   }
 
