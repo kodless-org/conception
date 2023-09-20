@@ -25,7 +25,7 @@ export default class PostConcept {
     const posts = await this.posts.readMany(query, {
       sort: { dateUpdated: -1 },
     });
-    return { posts };
+    return posts;
   }
 
   async update(_id: ObjectId, update: Partial<PostDoc>) {

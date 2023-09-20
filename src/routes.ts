@@ -54,7 +54,7 @@ class Routes {
 
   @Router.get("/posts")
   async getPosts(query: Filter<PostDoc>) {
-    return Responses.posts((await Post.read(query)).posts);
+    return Responses.posts(await Post.read(query));
   }
 
   @Router.post("/posts")
