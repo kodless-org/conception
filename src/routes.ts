@@ -103,8 +103,8 @@ class Routes {
 
   @Router.put("/requests/:from")
   async respondFriendRequest(session: WebSessionDoc, from: ObjectId, response: string) {
-    if (response !== "accepted" && response !== "rejected") {
-      throw new BadValuesError("response needs to be 'accepted' or 'rejected'");
+    if (response !== "accept" && response !== "reject") {
+      throw new BadValuesError("response needs to be 'accept' or 'reject'");
     }
     const user = WebSession.getUser(session);
     return await Friend.respondRequest(user, from, response);

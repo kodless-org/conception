@@ -29,15 +29,15 @@ export default class FriendConcept {
     return { msg: "Sent request!" };
   }
 
-  async respondRequest(from: ObjectId, to: ObjectId, response: "accepted" | "rejected") {
+  async respondRequest(from: ObjectId, to: ObjectId, response: "accept" | "reject") {
     const request = await this.requests.popOne({ from, to, status: "pending" });
     if (request === null) {
       throw new FriendRequestNotFoundError(from, to);
     }
-    void this.requests.createOne({ from, to, status: response });
+    void this.requests.createOne({ from, to, status: response === "accept" ? "accepted" : "rejected" });
 
     // if accepted, add a new friend
-    if (response === "accepted") {
+    if (response === "accept") {
       void this.addFriend(from, to);
     }
 
