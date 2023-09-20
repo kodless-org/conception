@@ -31,7 +31,7 @@ const operations = [
   },
   {
     name: "Get Users (empty for all)",
-    endpoint: "/api/users",
+    endpoint: "/api/users/:username",
     method: "GET",
     fields: { username: "input" },
   },
@@ -120,7 +120,12 @@ document.addEventListener("DOMContentLoaded", () => {
       e.preventDefault();
       const form = e.target as HTMLFormElement;
       const { $method, $endpoint, ...reqData } = Object.fromEntries(new FormData(form));
-      const endpoint = ($endpoint as string).replace(/:(\w+)/g, (_, key) => reqData[key] as string);
+
+      const endpoint = ($endpoint as string).replace(/:(\w+)/g, (_, key) => {
+        const param = reqData[key] as string;
+        delete reqData[key];
+        return param;
+      });
 
       // If field is json, parse it
       Object.entries(reqData).forEach(([key, value]) => {

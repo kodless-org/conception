@@ -40,8 +40,10 @@ export default class UserConcept {
   }
 
   async getUsers(username?: string) {
-    const users = (await this.users.readMany(username ? { username } : {})).map(this.sanitizeUser);
-    return { users };
+    // If username is undefined, return all users by applying empty filter
+    const filter = username ? { username } : {};
+    const users = (await this.users.readMany(filter)).map(this.sanitizeUser);
+    return users;
   }
 
   async logIn(username: string, password: string) {

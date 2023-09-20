@@ -11,8 +11,13 @@ import Responses from "./responses";
 
 class Routes {
   @Router.get("/users")
-  async getUsers(username?: string) {
-    return await User.getUsers(username);
+  async getUsers() {
+    return await User.getUsers();
+  }
+
+  @Router.get("/users/:username")
+  async getUser(username: string) {
+    return (await User.getUsers(username))[0];
   }
 
   @Router.post("/users")
