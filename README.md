@@ -11,12 +11,18 @@ by disabling `editor.formatOnSave`.
 Run `npm install` to install dependencies.
 
 ## Creating MongoDb Atlas Instance
-To run the server, you need to create a MongoDb Atlas instance.
-TODO: create account, project and .env file, add
-```
-MONGO_SRV=<connection url>
-```
-to the `.env` file.
+To run the server, you need to create a MongoDb Atlas instance and connect your project. Feel free to follow the instructions below or use these [slides](https://docs.google.com/presentation/d/1HJ4Lz1a2IH5oKu21fQGYgs8G2irtMqnVI9vWDheGfKM/edit?usp=sharing).
+1. Create your [MongoDB Atlas](https://www.mongodb.com/cloud/atlas/register) account.
+2. When selecting a template, choose the __free__ option, M0. 
+3. At the Security Quickstart page, select how you want to authenticate your connection and keep the rest of the defaults.
+4. Once created, click the __CONNECT__ button, select __driver__, and copy the srv connection string. If using username and password, the url should look something like this: `mongodb+srv://<username>:<password>@cluster0.p82ijqd.mongodb.net/?retryWrites=true&w=majority`. Make sure to replace username and password with your actual values.
+5. Now go to your project files and create a new file at the root directory called `.env` (don't forget the 'dot' at the front). Add the line
+    ```
+    MONGO_SRV=<connection url>
+    ```
+    to the `.env` file. 
+
+__Congrats!__ You're ready to run locally! Don't hesitate to reach out if you run into issues. 
 
 ## Running Locally
 
