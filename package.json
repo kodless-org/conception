@@ -2,11 +2,11 @@
   "name": "conception",
   "version": "0.1-alpha",
   "description": "POC for web app with concepts",
-  "main": "dist/src/main.js",
+  "main": "dist/api/index.js",
   "scripts": {
     "build": "tsc",
-    "watch": "tsc && concurrently \"tsc -w\" \"nodemon -r source-map-support/register dist/src/main.js\"",
-    "start": "tsc && node -r source-map-support/register dist/src/main.js",
+    "watch": "tsc && concurrently \"tsc -w\" \"nodemon -r source-map-support/register dist/api/index.js\"",
+    "start": "tsc && node -r source-map-support/register dist/api/index.js",
     "lint": "npx eslint . --ext .ts && npx prettier . --check",
     "format": "npx eslint . --ext .ts --fix && npx prettier . --write"
   },

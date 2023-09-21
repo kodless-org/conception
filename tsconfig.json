@@ -12,9 +12,9 @@
     "skipLibCheck": true,
 
     "rootDir": "./",
-    "baseUrl": "src/",
+    "baseUrl": "server/",
     "outDir": "dist/"
   },
-  "include": ["src/**/*.ts", "public/*.ts"],
+  "include": ["server/**/*.ts", "public/*.ts", "api/index.ts"],
   "exclude": ["node_modules", ".vscode"]
 }

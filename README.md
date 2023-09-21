@@ -18,7 +18,7 @@ For now, see [thoughts](https://github.com/BarishNamazov/conception/blob/main/th
 
 - [x] Make very simple Fritter with Freet and User concepts.
 
-- [x] More examples of concepts under `src/concepts/`, making a simple app.
+- [x] More examples of concepts under `server/concepts/`, making a simple app.
 
   - User, Freet, Friend -- fully modular!
 
