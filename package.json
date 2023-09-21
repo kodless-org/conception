@@ -5,7 +5,7 @@
   "main": "dist/src/main.js",
   "scripts": {
     "build": "tsc",
-    "watch": "tsc -w",
+    "watch": "tsc && concurrently \"tsc -w\" \"nodemon -r source-map-support/register dist/src/main.js\"",
     "start": "tsc && node -r source-map-support/register dist/src/main.js",
     "lint": "npx eslint . --ext .ts && npx prettier . --check",
     "format": "npx eslint . --ext .ts --fix && npx prettier . --write"
@@ -17,15 +17,18 @@
     "@types/morgan": "^1.9.4",
     "@typescript-eslint/eslint-plugin": "^6.0.0",
     "@typescript-eslint/parser": "^6.0.0",
+    "concurrently": "^8.2.1",
     "eslint": "^8.44.0",
     "eslint-config-prettier": "^9.0.0",
     "eslint-plugin-prettier": "^5.0.0",
     "eslint-plugin-unused-imports": "^3.0.0",
+    "nodemon": "^3.0.1",
     "prettier": "^3.0.2",
     "source-map-support": "^0.5.21",
     "typescript": "^5.1.6"
   },
   "dependencies": {
+    "connect-mongo": "^5.0.0",
     "cors": "^2.8.5",
     "dotenv": "^16.3.1",
     "express": "^4.18.2",

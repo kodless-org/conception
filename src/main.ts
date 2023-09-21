@@ -8,7 +8,7 @@ import * as path from "path";
 // The following line sets up the environment variables before everything else.
 dotenv.config();
 
-// Import your concept routers here.
+import MongoStore from "connect-mongo";
 import { connectDb } from "./db";
 import router from "./routes";
 
@@ -27,6 +27,9 @@ app.use(
     secret: process.env.SECRET || "Hello 6.1040",
     resave: true,
     saveUninitialized: false,
+    store: MongoStore.create({
+      mongoUrl: process.env.MONGO_SRV,
+    }),
   }),
 );
 
