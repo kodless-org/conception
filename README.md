@@ -11,7 +11,7 @@ by disabling `editor.formatOnSave`.
 Run `npm install` to install dependencies.
 
 ## Creating MongoDb Atlas Instance
-To run the server, you need to create a MongoDb Atlas instance and connect your project.
+To run the server, you need to create a MongoDb Atlas instance and connect your project. Feel free to follow the instructions below or use these [slides](https://docs.google.com/presentation/d/1HJ4Lz1a2IH5oKu21fQGYgs8G2irtMqnVI9vWDheGfKM/edit?usp=sharing).
 1. Create your [MongoDB Atlas](https://www.mongodb.com/cloud/atlas/register) account.
 2. When selecting a template, choose the __free__ option, M0. 
 3. At the Security Quickstart page, select how you want to authenticate your connection and keep the rest of the defaults.
