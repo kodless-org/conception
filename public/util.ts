@@ -61,7 +61,6 @@ const operations = [
   },
 ];
 
-const API_URL = "http://localhost:3000";
 type HttpMethod = "GET" | "POST" | "PUT" | "DELETE" | "PATCH";
 
 async function request(method: HttpMethod, endpoint: string, params?: unknown) {
@@ -70,7 +69,7 @@ async function request(method: HttpMethod, endpoint: string, params?: unknown) {
       endpoint += "?" + new URLSearchParams(params as Record<string, string>).toString();
       params = undefined;
     }
-    const res = fetch(API_URL + endpoint, {
+    const res = fetch(endpoint, {
       method,
       headers: {
         "Content-Type": "application/json",
