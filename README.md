@@ -1,8 +1,22 @@
 # 6.1040 Social Media Starter Backend Code
 
+## Getting Started
+
+If you are using VSCode/VSCodium, install the ESLint and Prettier extensions.
+The project is already configured to use ESLint and Prettier,
+but feel free to add your own rules if you want.
+Right now, the code is formatted on save; you can change this in `.vscode/settings.json`
+by disabling `editor.formatOnSave`.
+
+Run `npm install` to install dependencies.
+
 ## Creating MongoDb Atlas Instance
 To run the server, you need to create a MongoDb Atlas instance.
-TODO: create account, project and .env file
+TODO: create account, project and .env file, add
+```
+MONGO_SRV=<connection url>
+```
+to the `.env` file.
 
 ## Running Locally
 
