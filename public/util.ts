@@ -137,6 +137,8 @@ document.addEventListener("DOMContentLoaded", () => {
         }
       });
 
+      document.querySelector("#status-code")!.innerHTML = "";
+      document.querySelector("#response-text")!.innerHTML = "Loading...";
       const response = await request($method as HttpMethod, endpoint as string, Object.keys(reqData).length > 0 ? reqData : undefined);
       document.querySelector("#response-text")!.innerHTML = JSON.stringify(response.response, null, 2);
       document.querySelector("#status-code")!.innerHTML = "(" + response.statusCode.toString() + ")";
