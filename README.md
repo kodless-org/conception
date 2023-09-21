@@ -1,33 +1,32 @@
-# Concept-Driven Backend framework
+# 6.1040 Social Media Starter Backend Code
 
-## Inspiration
+## Creating MongoDb Atlas Instance
+To run the server, you need to create a MongoDb Atlas instance.
+TODO: create account, project and .env file
 
-Didn't like the way I coded this project: [Fritter](https://github.com/BarishNamazov/fritter).
+## Running Locally
 
-## Goals
+Run `npm start` to start the server and the testing client.
+If you make changes to code, you need to manually restart the server.
 
-Make development based on concepts as taught in [6.1040](https://61040-fa22.github.io/schedule) easy.
+Run `npm watch` to watch for changes and restart the server automatically.
+Note that this is not recommended when actively developing;
+use this when testing your code so your small changes get reflected in the server.
 
-## Philosophy
+## Testing
 
-For now, see [thoughts](https://github.com/BarishNamazov/conception/blob/main/thoughts.md), but might add to here more later.
+There is a testing client under `public` directory.
+Add more operations to `public/util.ts` to test your server code.
+Make sure to refresh the page after making changes to the client code.
+Add some fancy CSS to make your page look nicer!
 
-## TODOS
+Keep in mind that we are using `MongoStore` for session management,
+so your session will be persisted across server restarts.
 
-- [x] Basic base for defining concepts and routers.
+## Deploying to Vercel
 
-- [x] Make very simple Fritter with Freet and User concepts.
-
-- [x] More examples of concepts under `server/concepts/`, making a simple app.
-
-  - User, Freet, Friend -- fully modular!
-
-- [x] Make methods work with direct method references rather than string names.
-
-- [x] Make actions work with the contents of request directly rather than deal with `req` and `res`.
-
-- [ ] Optional: Implement singleton concept base (i.e., easy user has only one of that object).
-
-- [ ] Unit tests? Need to figure out how to set up Mongo or in-memory mock for that.
-
-- [ ] Simple frontend to test backend manually (or just Postman?).
+1. Fork this repo.
+2. Create a new project on Vercel and link it to your GitHub project.
+3. Under "Build & Development Settings", change "Output Directory" to `dist/public`.
+4. Add the following environment variables to your Vercel project: Key: `MONGO_SRV`, Value: `<your mongo connection string from .env file>`
+5. Deploy!
