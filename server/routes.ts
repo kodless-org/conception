@@ -44,17 +44,14 @@ class Routes {
     WebSession.isLoggedOut(session);
     const u = await User.logIn(username, password);
     WebSession.setUser(session, u._id);
-    const f = await Post.create(u._id, "Hi, I logged in!");
-    return { msg: "Logged in and posted!", user: u, post: await Responses.post(f.post) };
+    return { msg: "Logged in!" };
   }
 
   @Router.post("/logout")
   async logOut(session: WebSessionDoc) {
     WebSession.isLoggedIn(session);
-    const user = WebSession.getUser(session);
     WebSession.setUser(session, undefined);
-    const f = await Post.create(user, "Bye bye, logging off!");
-    return { msg: "Logged out and posted!", post: await Responses.post(f.post) };
+    return { msg: "Logged out!" };
   }
 
   @Router.get("/posts")
