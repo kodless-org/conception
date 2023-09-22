@@ -20,7 +20,7 @@ export default class Responses {
   }
 
   /**
-   * Same as {@link makePostResponse} but for an array of PostDoc for improved performance.
+   * Same as {@link post} but for an array of PostDoc for improved performance.
    */
   static async posts(posts: PostDoc[]) {
     const authors = await User.idsToUsernames(posts.map((post) => post.author));
