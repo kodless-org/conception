@@ -36,6 +36,7 @@ use this when testing your code so your small changes get reflected in the serve
 ## Testing
 
 There is a testing client under `public` directory.
+Locate to `http://localhost:3000` (or a different port if you changed it) to see the testing client.
 Add more operations to `public/util.ts` to test your server code.
 Make sure to refresh the page after making changes to the client code.
 Add some fancy CSS to make your page look nicer!
@@ -48,5 +49,11 @@ so your session will be persisted across server restarts.
 1. Fork this repo.
 2. Create a new project on Vercel and link it to your GitHub project.
 3. Under "Build & Development Settings", change "Output Directory" to `dist/public`.
-4. Add the following environment variables to your Vercel project: Key: `MONGO_SRV`, Value: `<your mongo connection string from .env file>`
+4. Add the following environment variables to your Vercel project:
+Key: `MONGO_SRV`, Value: `<your mongo connection string from .env file>`
 5. Deploy!
+
+## Understanding the Structure
+
+<!-- The main entry point to the server is `api/index.ts`.
+This is how the server is started and how the routes are registered. -->

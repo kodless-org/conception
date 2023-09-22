@@ -15,6 +15,6 @@
     "baseUrl": "server/",
     "outDir": "dist/"
   },
-  "include": ["server/**/*.ts", "public/*.ts", "api/index.ts"],
+  "include": ["server/**/*.ts", "public/*.ts", "server/main.ts"],
   "exclude": ["node_modules", ".vscode"]
 }

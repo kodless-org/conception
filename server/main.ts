@@ -9,8 +9,8 @@ import * as path from "path";
 dotenv.config();
 
 import MongoStore from "connect-mongo";
-import { connectDb } from "../server/db";
-import router from "../server/routes";
+import { connectDb } from "./db";
+import router from "./routes";
 
 export const app = express();
 const PORT = process.env.PORT || 3000;
