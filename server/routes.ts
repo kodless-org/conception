@@ -10,6 +10,12 @@ import { WebSessionDoc } from "./concepts/websession";
 import Responses from "./responses";
 
 class Routes {
+  @Router.get("/session")
+  async getSessionUser(session: WebSessionDoc) {
+    const user = WebSession.getUser(session);
+    return await User.getUserById(user);
+  }
+
   @Router.get("/users")
   async getUsers() {
     return await User.getUsers();
