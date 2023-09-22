@@ -16,7 +16,7 @@ To run the server, you need to create a MongoDb Atlas instance and connect your 
 2. When selecting a template, choose the __free__ option, M0. 
 3. At the Security Quickstart page, select how you want to authenticate your connection and keep the rest of the defaults.
 4. Once created, click the __CONNECT__ button, select __driver__, and copy the srv connection string. If using username and password, the url should look something like this: `mongodb+srv://<username>:<password>@cluster0.p82ijqd.mongodb.net/?retryWrites=true&w=majority`. Make sure to replace username and password with your actual values.
-5. Now go to your project files and create a new file at the root directory called `.env` (don't forget the 'dot' at the front). Add the line
+5. Now go to your project files and create a new file at the root directory called `.env` (don't forget the 'dot' at the front). Add the line (without `<` and `>`)
     ```
     MONGO_SRV=<connection url>
     ```
