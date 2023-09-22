@@ -1,5 +1,11 @@
 const operations = [
   {
+    name: "Get Session User (logged in user)",
+    endpoint: "/api/session",
+    method: "GET",
+    fields: {},
+  },
+  {
     name: "Create User",
     endpoint: "/api/users",
     method: "POST",
