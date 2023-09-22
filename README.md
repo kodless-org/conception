@@ -16,7 +16,7 @@ To run the server, you need to create a MongoDb Atlas instance and connect your 
 2. When selecting a template, choose the __free__ option, M0. 
 3. At the Security Quickstart page, select how you want to authenticate your connection and keep the rest of the defaults.
 4. Once created, click the __CONNECT__ button, select __driver__, and copy the srv connection string. If using username and password, the url should look something like this: `mongodb+srv://<username>:<password>@cluster0.p82ijqd.mongodb.net/?retryWrites=true&w=majority`. Make sure to replace username and password with your actual values.
-5. Now go to your project files and create a new file at the root directory called `.env` (don't forget the 'dot' at the front). Add the line
+5. Now go to your project files and create a new file at the root directory called `.env` (don't forget the 'dot' at the front). Add the line (without `<` and `>`)
     ```
     MONGO_SRV=<connection url>
     ```
@@ -36,6 +36,7 @@ use this when testing your code so your small changes get reflected in the serve
 ## Testing
 
 There is a testing client under `public` directory.
+Locate to `http://localhost:3000` (or a different port if you changed it) to see the testing client.
 Add more operations to `public/util.ts` to test your server code.
 Make sure to refresh the page after making changes to the client code.
 Add some fancy CSS to make your page look nicer!
@@ -48,5 +49,35 @@ so your session will be persisted across server restarts.
 1. Fork this repo.
 2. Create a new project on Vercel and link it to your GitHub project.
 3. Under "Build & Development Settings", change "Output Directory" to `dist/public`.
-4. Add the following environment variables to your Vercel project: Key: `MONGO_SRV`, Value: `<your mongo connection string from .env file>`
+4. Add the following environment variables to your Vercel project:
+Key: `MONGO_SRV`, Value: `<your mongo connection string from .env file>`
 5. Deploy!
+
+## Understanding the Structure
+
+The main entry point to the server is `api/index.ts`.
+This is how the server is started and how the routes are registered.
+We would usually put this file under `server/`,
+but Vercel requires the entry point to be under `api/` directory.
+
+The code for the server is under `server/` directory,
+which includes both concept and RESTful API implementations.
+
+Here's an overview of the files and directories:
+- `server/concepts` contains the concept implementations.
+Note that we try to keep concepts as modular and generic as possible.
+- `server/concepts/errors.ts` contains the base error classes you can
+either directly use or extend from. You are free to add more base errors
+in that file if you need to
+(e.g., if your route needs to return [I am a teapot](https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/418) error).
+- `framework/` contains the framework code that does the magic to convert your
+route implementations and error handling into Express handlers.
+You should't edit this directory, but feel free to take a look!
+- `server/app.ts` contains your app definition (i.e., concept instantiations).
+- `server/db.ts` contains the MongoDb setup code. You don't need to edit this file.
+- `server/routes.ts` contains the code for your API routes.
+Try to keep your route definitions as simple as possible.
+- `server/responses.ts` contains the code for formatting your responses and errors
+into a more user-friendly format for the front-end. For example, it would be better
+if your front-end receives `barish is not the author of this post` instead of
+`64e52a1f5ffc7d0d48a0569d is not the author of this post`.
