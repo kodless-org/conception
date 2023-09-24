@@ -29,6 +29,7 @@ export default class PostConcept {
   }
 
   async update(_id: ObjectId, update: Partial<PostDoc>) {
+    this.sanitizeUpdate(update);
     await this.posts.updateOne({ _id }, update);
     return { msg: "Post successfully updated!" };
   }
@@ -45,6 +46,16 @@ export default class PostConcept {
     }
     if (post.author.toString() !== user.toString()) {
       throw new PostAuthorNotMatchError(user, _id);
+    }
+  }
+
+  private sanitizeUpdate(update: Partial<PostDoc>) {
+    // Make sure the update cannot change the author.
+    const allowedUpdates = ["content", "options"];
+    for (const key in update) {
+      if (!allowedUpdates.includes(key)) {
+        throw new NotAllowedError(`Cannot update '${key}' field!`);
+      }
     }
   }
 }
