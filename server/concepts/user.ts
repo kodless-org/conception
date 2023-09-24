@@ -5,7 +5,6 @@ import { BadValuesError, NotAllowedError, NotFoundError } from "./errors";
 export interface UserDoc extends BaseDoc {
   username: string;
   password: string;
-  profilePictureUrl?: string;
 }
 
 export default class UserConcept {
