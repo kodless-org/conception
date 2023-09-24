@@ -38,7 +38,7 @@ export default class PostConcept {
     return { msg: "Post deleted successfully!" };
   }
 
-  async isAuthorMatch(user: ObjectId, _id: ObjectId) {
+  async isAuthor(user: ObjectId, _id: ObjectId) {
     const post = await this.posts.readOne({ _id });
     if (!post) {
       throw new NotFoundError(`Post ${_id} does not exist!`);
