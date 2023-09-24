@@ -75,14 +75,14 @@ class Routes {
   @Router.patch("/posts/:_id")
   async updatePost(session: WebSessionDoc, _id: ObjectId, update: Partial<PostDoc>) {
     const user = WebSession.getUser(session);
-    await Post.isAuthorMatch(user, _id);
+    await Post.isAuthor(user, _id);
     return await Post.update(_id, update);
   }
 
   @Router.delete("/posts/:_id")
   async deletePost(session: WebSessionDoc, _id: ObjectId) {
     const user = WebSession.getUser(session);
-    await Post.isAuthorMatch(user, _id);
+    await Post.isAuthor(user, _id);
     return Post.delete(_id);
   }
 

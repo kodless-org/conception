@@ -29,6 +29,7 @@ export default class PostConcept {
   }
 
   async update(_id: ObjectId, update: Partial<PostDoc>) {
+    this.sanitizeUpdate(update);
     await this.posts.updateOne({ _id }, update);
     return { msg: "Post successfully updated!" };
   }
@@ -38,13 +39,23 @@ export default class PostConcept {
     return { msg: "Post deleted successfully!" };
   }
 
-  async isAuthorMatch(user: ObjectId, _id: ObjectId) {
+  async isAuthor(user: ObjectId, _id: ObjectId) {
     const post = await this.posts.readOne({ _id });
     if (!post) {
       throw new NotFoundError(`Post ${_id} does not exist!`);
     }
     if (post.author.toString() !== user.toString()) {
       throw new PostAuthorNotMatchError(user, _id);
+    }
+  }
+
+  private sanitizeUpdate(update: Partial<PostDoc>) {
+    // Make sure the update cannot change the author.
+    const allowedUpdates = ["content", "options"];
+    for (const key in update) {
+      if (!allowedUpdates.includes(key)) {
+        throw new NotAllowedError(`Cannot update '${key}' field!`);
+      }
     }
   }
 }
