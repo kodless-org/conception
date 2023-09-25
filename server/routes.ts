@@ -41,22 +41,20 @@ class Routes {
   @Router.delete("/users")
   async deleteUser(session: WebSessionDoc) {
     const user = WebSession.getUser(session);
-    WebSession.setUser(session, undefined);
+    WebSession.end(session);
     return await User.delete(user);
   }
 
   @Router.post("/login")
   async logIn(session: WebSessionDoc, username: string, password: string) {
-    WebSession.isLoggedOut(session);
-    const u = await User.logIn(username, password);
-    WebSession.setUser(session, u._id);
+    const u = await User.authenticate(username, password);
+    WebSession.start(session, u._id);
     return { msg: "Logged in!" };
   }
 
   @Router.post("/logout")
   async logOut(session: WebSessionDoc) {
-    WebSession.isLoggedIn(session);
-    WebSession.setUser(session, undefined);
+    WebSession.end(session);
     return { msg: "Logged out!" };
   }
 

@@ -45,16 +45,12 @@ export default class UserConcept {
     return users;
   }
 
-  async logIn(username: string, password: string) {
+  async authenticate(username: string, password: string) {
     const user = await this.users.readOne({ username, password });
     if (!user) {
       throw new NotAllowedError("Username or password is incorrect.");
     }
-    return { msg: "Successfully logged in.", _id: user._id };
-  }
-
-  logOut() {
-    return { msg: "Successfully logged out." };
+    return { msg: "Successfully authenticated.", _id: user._id };
   }
 
   async update(_id: ObjectId, update: Partial<UserDoc>) {
@@ -65,8 +61,8 @@ export default class UserConcept {
     return { msg: "User updated successfully!" };
   }
 
-  async delete(user: ObjectId) {
-    await this.users.deleteOne({ user });
+  async delete(_id: ObjectId) {
+    await this.users.deleteOne({ _id });
     return { msg: "User deleted!" };
   }
 
