@@ -135,7 +135,7 @@ document.addEventListener("DOMContentLoaded", () => {
       // If field is json, parse it
       Object.entries(reqData).forEach(([key, value]) => {
         try {
-          if ((operations.find((o) => o.endpoint === $endpoint)?.fields as Record<string, string>)[key] === "json") {
+          if ((operations.find((o) => o.endpoint === $endpoint && o.method === $method)?.fields as Record<string, string>)[key] === "json") {
             reqData[key] = JSON.parse(value as string);
           }
         } catch (e) {
