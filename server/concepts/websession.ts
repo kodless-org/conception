@@ -12,8 +12,14 @@ declare module "express-session" {
 }
 
 export default class WebSessionConcept {
-  setUser(session: WebSessionDoc, user: ObjectId | undefined) {
+  start(session: WebSessionDoc, user?: ObjectId) {
+    this.isLoggedOut(session);
     session.user = user;
+  }
+
+  end(session: WebSessionDoc) {
+    this.isLoggedIn(session);
+    session.user = undefined;
   }
 
   getUser(session: WebSessionDoc) {
