@@ -5,16 +5,19 @@ import { NotAllowedError, UnauthenticatedError } from "./errors";
 export type WebSessionDoc = SessionData;
 
 // This allows us to overload express session data type.
+// Express session does not support non-string values over requests.
+// We'll be using this to store the user _id in the session.
 declare module "express-session" {
   export interface SessionData {
-    user?: ObjectId;
+    user?: string;
   }
 }
 
 export default class WebSessionConcept {
-  start(session: WebSessionDoc, user?: ObjectId) {
+  start(session: WebSessionDoc, user: ObjectId) {
     this.isLoggedOut(session);
-    session.user = user;
+    session.user = user.toString();
+    console.log(user, session.user, session);
   }
 
   end(session: WebSessionDoc) {
@@ -24,7 +27,7 @@ export default class WebSessionConcept {
 
   getUser(session: WebSessionDoc) {
     this.isLoggedIn(session);
-    return session.user!;
+    return new ObjectId(session.user);
   }
 
   isLoggedIn(session: WebSessionDoc) {

@@ -4,7 +4,7 @@
   "description": "POC for web app with concepts",
   "main": "dist/api/index.js",
   "scripts": {
-    "build": "tsc && copyfiles public/*.html public/*.css dist/",
+    "build": "tsc && copyfiles public/*.html public/*.css public/favicon.ico dist/",
     "watch": "npm run build && concurrently \"tsc -w\" \"nodemon -r source-map-support/register dist/api/index.js\"",
     "start": "npm run build && node -r source-map-support/register dist/api/index.js",
     "lint": "npx eslint . --ext .ts && npx prettier . --check",

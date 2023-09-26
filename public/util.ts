@@ -1,4 +1,16 @@
-const operations = [
+type HttpMethod = "GET" | "POST" | "PUT" | "DELETE" | "PATCH";
+type InputTag = "input" | "textarea";
+type Field = InputTag | { [key: string]: Field };
+type Fields = Record<string, Field>;
+
+type operation = {
+  name: string;
+  endpoint: string;
+  method: HttpMethod;
+  fields: Fields;
+};
+
+const operations: operation[] = [
   {
     name: "Get Session User (logged in user)",
     endpoint: "/api/session",
@@ -27,7 +39,7 @@ const operations = [
     name: "Update User",
     endpoint: "/api/users",
     method: "PATCH",
-    fields: { update: "json" },
+    fields: { update: { username: "input", password: "input" } },
   },
   {
     name: "Delete User",
@@ -51,13 +63,13 @@ const operations = [
     name: "Create Post",
     endpoint: "/api/posts",
     method: "POST",
-    fields: { content: "textarea" },
+    fields: { content: "input" },
   },
   {
     name: "Update Post",
     endpoint: "/api/posts/:id",
     method: "PATCH",
-    fields: { id: "input", update: "json" },
+    fields: { id: "input", update: { content: "input", options: { backgroundColor: "input" } } },
   },
   {
     name: "Delete Post",
@@ -67,7 +79,12 @@ const operations = [
   },
 ];
 
-type HttpMethod = "GET" | "POST" | "PUT" | "DELETE" | "PATCH";
+// Do not edit below here.
+
+function updateResponse(code: string, response: string) {
+  document.querySelector("#status-code")!.innerHTML = code;
+  document.querySelector("#response-text")!.innerHTML = response;
+}
 
 async function request(method: HttpMethod, endpoint: string, params?: unknown) {
   try {
@@ -75,6 +92,7 @@ async function request(method: HttpMethod, endpoint: string, params?: unknown) {
       endpoint += "?" + new URLSearchParams(params as Record<string, string>).toString();
       params = undefined;
     }
+
     const res = fetch(endpoint, {
       method,
       headers: {
@@ -83,17 +101,31 @@ async function request(method: HttpMethod, endpoint: string, params?: unknown) {
       credentials: "same-origin",
       body: params ? JSON.stringify(params) : undefined,
     });
+
     return {
-      statusCode: (await res).status,
-      response: await (await res).json(),
+      $statusCode: (await res).status,
+      $response: await (await res).json(),
     };
   } catch (e) {
     console.log(e);
     return {
-      statusCode: "???",
-      response: { error: "Something went wrong, check your console log." },
+      $statusCode: "???",
+      $response: { error: "Something went wrong, check your console log.", details: e },
     };
   }
+}
+
+function fieldsToHtml(fields: Record<string, Field>, indent = 0): string {
+  return Object.entries(fields)
+    .map(([name, tag]) => {
+      return `
+        <div class="field" style="margin-left: ${indent}px">
+          <label>${name}:
+          ${typeof tag === "string" ? `<${tag} name="${name}"></${tag}>` : fieldsToHtml(tag, indent + 10)}
+          </label>
+        </div>`;
+    })
+    .join("");
 }
 
 function getHtmlOperations() {
@@ -103,51 +135,31 @@ function getHtmlOperations() {
       <form class="operation-form">
         <input type="hidden" name="$endpoint" value="${operation.endpoint}" />
         <input type="hidden" name="$method" value="${operation.method}" />
-        ${Object.entries(operation.fields)
-          .map(([name, type]) => {
-            const tag = type === "json" ? "textarea" : type;
-            return `<div class="field">
-              <label for="${name}">${name}</label>
-              <${tag} name="${name}" id="${name}"></${tag}>
-            </div>`;
-          })
-          .join("")}
+        ${fieldsToHtml(operation.fields)}
         <button type="submit">Submit</button>
       </form>
     </li>`;
   });
 }
 
+async function submitEventHandler(e: Event) {
+  e.preventDefault();
+  const form = e.target as HTMLFormElement;
+  const { $method, $endpoint, ...reqData } = Object.fromEntries(new FormData(form));
+
+  // Replace :param with the actual value.
+  const endpoint = ($endpoint as string).replace(/:(\w+)/g, (_, key) => {
+    const param = reqData[key] as string;
+    delete reqData[key];
+    return param;
+  });
+
+  updateResponse("", "Loading...");
+  const response = await request($method as HttpMethod, endpoint as string, Object.keys(reqData).length > 0 ? reqData : undefined);
+  updateResponse(response.$statusCode.toString(), JSON.stringify(response.$response, null, 2));
+}
+
 document.addEventListener("DOMContentLoaded", () => {
   document.querySelector("#operations-list")!.innerHTML = getHtmlOperations().join("");
-  document.querySelectorAll(".operation-form").forEach((form) =>
-    form.addEventListener("submit", async (e) => {
-      e.preventDefault();
-      const form = e.target as HTMLFormElement;
-      const { $method, $endpoint, ...reqData } = Object.fromEntries(new FormData(form));
-
-      const endpoint = ($endpoint as string).replace(/:(\w+)/g, (_, key) => {
-        const param = reqData[key] as string;
-        delete reqData[key];
-        return param;
-      });
-
-      // If field is json, parse it
-      Object.entries(reqData).forEach(([key, value]) => {
-        try {
-          if ((operations.find((o) => o.endpoint === $endpoint && o.method === $method)?.fields as Record<string, string>)[key] === "json") {
-            reqData[key] = JSON.parse(value as string);
-          }
-        } catch (e) {
-          console.log(e);
-        }
-      });
-
-      document.querySelector("#status-code")!.innerHTML = "";
-      document.querySelector("#response-text")!.innerHTML = "Loading...";
-      const response = await request($method as HttpMethod, endpoint as string, Object.keys(reqData).length > 0 ? reqData : undefined);
-      document.querySelector("#response-text")!.innerHTML = JSON.stringify(response.response, null, 2);
-      document.querySelector("#status-code")!.innerHTML = "(" + response.statusCode.toString() + ")";
-    }),
-  );
+  document.querySelectorAll(".operation-form").forEach((form) => form.addEventListener("submit", submitEventHandler));
 });

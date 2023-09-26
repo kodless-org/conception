@@ -38,6 +38,23 @@ main {
   padding: 1em;
 }
 
+#operations-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1em;
+}
+
+.operation {
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  padding: 1em;
+  list-style: none;
+}
+
+.field {
+  margin-bottom: 4px;
+}
+
 #response-text {
   font-family: 'Courier New', Courier, monospace;
 }
