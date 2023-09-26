@@ -87,6 +87,7 @@ function updateResponse(code: string, response: string) {
 }
 
 async function request(method: HttpMethod, endpoint: string, params?: unknown) {
+  console.log(params);
   try {
     if (method === "GET" && params) {
       endpoint += "?" + new URLSearchParams(params as Record<string, string>).toString();
@@ -115,13 +116,13 @@ async function request(method: HttpMethod, endpoint: string, params?: unknown) {
   }
 }
 
-function fieldsToHtml(fields: Record<string, Field>, indent = 0): string {
+function fieldsToHtml(fields: Record<string, Field>, indent = 0, prefix = ""): string {
   return Object.entries(fields)
     .map(([name, tag]) => {
       return `
         <div class="field" style="margin-left: ${indent}px">
           <label>${name}:
-          ${typeof tag === "string" ? `<${tag} name="${name}"></${tag}>` : fieldsToHtml(tag, indent + 10)}
+          ${typeof tag === "string" ? `<${tag} name="${prefix}${name}"></${tag}>` : fieldsToHtml(tag, indent + 10, prefix + name + ".")}
           </label>
         </div>`;
     })
@@ -142,6 +143,26 @@ function getHtmlOperations() {
   });
 }
 
+function prefixedRecordIntoObject(record: Record<string, string>) {
+  const obj: any = {}; // eslint-disable-line
+  for (const [key, value] of Object.entries(record)) {
+    if (!value) {
+      continue;
+    }
+    const keys = key.split(".");
+    const lastKey = keys.pop()!;
+    let currentObj = obj;
+    for (const key of keys) {
+      if (!currentObj[key]) {
+        currentObj[key] = {};
+      }
+      currentObj = currentObj[key];
+    }
+    currentObj[lastKey] = value;
+  }
+  return obj;
+}
+
 async function submitEventHandler(e: Event) {
   e.preventDefault();
   const form = e.target as HTMLFormElement;
@@ -154,8 +175,10 @@ async function submitEventHandler(e: Event) {
     return param;
   });
 
+  const data = prefixedRecordIntoObject(reqData as Record<string, string>);
+
   updateResponse("", "Loading...");
-  const response = await request($method as HttpMethod, endpoint as string, Object.keys(reqData).length > 0 ? reqData : undefined);
+  const response = await request($method as HttpMethod, endpoint as string, Object.keys(data).length > 0 ? data : undefined);
   updateResponse(response.$statusCode.toString(), JSON.stringify(response.$response, null, 2));
 }
 
