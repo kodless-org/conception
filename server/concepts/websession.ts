@@ -17,7 +17,6 @@ export default class WebSessionConcept {
   start(session: WebSessionDoc, user: ObjectId) {
     this.isLoggedOut(session);
     session.user = user.toString();
-    console.log(user, session.user, session);
   }
 
   end(session: WebSessionDoc) {

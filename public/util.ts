@@ -87,7 +87,6 @@ function updateResponse(code: string, response: string) {
 }
 
 async function request(method: HttpMethod, endpoint: string, params?: unknown) {
-  console.log(params);
   try {
     if (method === "GET" && params) {
       endpoint += "?" + new URLSearchParams(params as Record<string, string>).toString();
