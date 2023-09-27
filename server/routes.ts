@@ -100,7 +100,7 @@ class Routes {
   async removeFriend(session: WebSessionDoc, friend: string) {
     const user = WebSession.getUser(session);
     const friendId = (await User.getUserByUsername(friend))._id;
-    await Friend.removeFriend(user, friendId);
+    return await Friend.removeFriend(user, friendId);
   }
 
   @Router.get("/friend/requests")
