@@ -3,7 +3,6 @@ import { ObjectId } from "mongodb";
 import { Router, getExpressRouter } from "./framework/router";
 
 import { Friend, Post, User, WebSession } from "./app";
-import { BadValuesError } from "./concepts/errors";
 import { PostDoc, PostOptions } from "./concepts/post";
 import { UserDoc } from "./concepts/user";
 import { WebSessionDoc } from "./concepts/websession";
@@ -91,15 +90,17 @@ class Routes {
     return Post.delete(_id);
   }
 
-  @Router.get("/friends/:user")
-  async getFriends(user: ObjectId) {
+  @Router.get("/friends")
+  async getFriends(session: WebSessionDoc) {
+    const user = WebSession.getUser(session);
     return await User.idsToUsernames(await Friend.getFriends(user));
   }
 
   @Router.delete("/friends/:friend")
-  async removeFriend(session: WebSessionDoc, friend: ObjectId) {
+  async removeFriend(session: WebSessionDoc, friend: string) {
     const user = WebSession.getUser(session);
-    await Friend.removeFriend(user, friend);
+    const friendId = (await User.getUserByUsername(friend))._id;
+    await Friend.removeFriend(user, friendId);
   }
 
   @Router.get("/friend/requests")
@@ -108,26 +109,32 @@ class Routes {
     return await Responses.friendRequests(await Friend.getRequests(user));
   }
 
+  @Router.post("/friend/requests/:to")
+  async sendFriendRequest(session: WebSessionDoc, to: string) {
+    const user = WebSession.getUser(session);
+    const toId = (await User.getUserByUsername(to))._id;
+    return await Friend.sendRequest(user, toId);
+  }
+
   @Router.delete("/friend/requests/:to")
-  async removeFriendRequest(session: WebSessionDoc, to: ObjectId) {
+  async removeFriendRequest(session: WebSessionDoc, to: string) {
     const user = WebSession.getUser(session);
-    return await Friend.removeRequest(user, to);
+    const toId = (await User.getUserByUsername(to))._id;
+    return await Friend.removeRequest(user, toId);
   }
 
-  @Router.put("/friend/requests/:from")
-  async respondFriendRequest(session: WebSessionDoc, from: ObjectId, response: string) {
-    if (response !== "accept" && response !== "reject") {
-      throw new BadValuesError("response needs to be 'accept' or 'reject'");
-    }
+  @Router.put("/friend/accept/:from")
+  async acceptFriendRequest(session: WebSessionDoc, from: string) {
     const user = WebSession.getUser(session);
-    return await (response === "accept" ? Friend.acceptRequest(from, user) : Friend.rejectRequest(from, user));
+    const fromId = (await User.getUserByUsername(from))._id;
+    return await Friend.acceptRequest(fromId, user);
   }
 
-  @Router.post("/requests/:to")
-  async sendFriendRequest(session: WebSessionDoc, to: ObjectId) {
-    await User.userExists(to);
+  @Router.put("/friend/reject/:from")
+  async rejectFriendRequest(session: WebSessionDoc, from: string) {
     const user = WebSession.getUser(session);
-    return await Friend.sendRequest(user, to);
+    const fromId = (await User.getUserByUsername(from))._id;
+    return await Friend.rejectRequest(fromId, user);
   }
 }
 

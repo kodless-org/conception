@@ -12,7 +12,7 @@ export default class UserConcept {
 
   async create(username: string, password: string) {
     await this.canCreate(username, password);
-    const _id = (await this.users.createOne({ username, password })).insertedId;
+    const _id = await this.users.createOne({ username, password });
     return { msg: "User created successfully!", user: await this.users.readOne({ _id }) };
   }
 

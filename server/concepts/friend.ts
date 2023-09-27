@@ -65,15 +65,16 @@ export default class FriendConcept {
     const friendships = await this.friends.readMany({
       $or: [{ user1: user }, { user2: user }],
     });
-    return friendships.map((friendship) => (friendship.user1 === user ? friendship.user2 : friendship.user1));
+    // Making sure to compare ObjectId using toString()
+    return friendships.map((friendship) => (friendship.user1.toString() === user.toString() ? friendship.user2 : friendship.user1));
   }
 
   private async addFriend(user1: ObjectId, user2: ObjectId) {
     void this.friends.createOne({ user1, user2 });
   }
 
-  private removePendingRequest(from: ObjectId, to: ObjectId) {
-    const request = this.requests.popOne({ from, to, status: "pending" });
+  private async removePendingRequest(from: ObjectId, to: ObjectId) {
+    const request = await this.requests.popOne({ from, to, status: "pending" });
     if (request === null) {
       throw new FriendRequestNotFoundError(from, to);
     }
@@ -87,7 +88,7 @@ export default class FriendConcept {
         { user1: u2, user2: u1 },
       ],
     });
-    if (friendship !== null || u1 === u2) {
+    if (friendship !== null || u1.toString() === u2.toString()) {
       throw new AlreadyFriendsError(u1, u2);
     }
   }
