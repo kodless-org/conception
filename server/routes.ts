@@ -90,15 +90,17 @@ class Routes {
     return Post.delete(_id);
   }
 
-  @Router.get("/friends/:user")
-  async getFriends(user: ObjectId) {
+  @Router.get("/friends")
+  async getFriends(session: WebSessionDoc) {
+    const user = WebSession.getUser(session);
     return await User.idsToUsernames(await Friend.getFriends(user));
   }
 
   @Router.delete("/friends/:friend")
-  async removeFriend(session: WebSessionDoc, friend: ObjectId) {
+  async removeFriend(session: WebSessionDoc, friend: string) {
     const user = WebSession.getUser(session);
-    await Friend.removeFriend(user, friend);
+    const friendId = (await User.getUserByUsername(friend))._id;
+    await Friend.removeFriend(user, friendId);
   }
 
   @Router.get("/friend/requests")
@@ -108,28 +110,31 @@ class Routes {
   }
 
   @Router.post("/friend/requests/:to")
-  async sendFriendRequest(session: WebSessionDoc, to: ObjectId) {
-    await User.userExists(to);
+  async sendFriendRequest(session: WebSessionDoc, to: string) {
     const user = WebSession.getUser(session);
-    return await Friend.sendRequest(user, to);
+    const toId = (await User.getUserByUsername(to))._id;
+    return await Friend.sendRequest(user, toId);
   }
 
   @Router.delete("/friend/requests/:to")
-  async removeFriendRequest(session: WebSessionDoc, to: ObjectId) {
+  async removeFriendRequest(session: WebSessionDoc, to: string) {
     const user = WebSession.getUser(session);
-    return await Friend.removeRequest(user, to);
+    const toId = (await User.getUserByUsername(to))._id;
+    return await Friend.removeRequest(user, toId);
   }
 
   @Router.put("/friend/accept/:from")
-  async acceptFriendRequest(session: WebSessionDoc, from: ObjectId) {
+  async acceptFriendRequest(session: WebSessionDoc, from: string) {
     const user = WebSession.getUser(session);
-    return await Friend.acceptRequest(from, user);
+    const fromId = (await User.getUserByUsername(from))._id;
+    return await Friend.acceptRequest(fromId, user);
   }
 
   @Router.put("/friend/reject/:from")
-  async rejectFriendRequest(session: WebSessionDoc, from: ObjectId) {
+  async rejectFriendRequest(session: WebSessionDoc, from: string) {
     const user = WebSession.getUser(session);
-    return await Friend.rejectRequest(from, user);
+    const fromId = (await User.getUserByUsername(from))._id;
+    return await Friend.rejectRequest(fromId, user);
   }
 }
 

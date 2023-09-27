@@ -72,8 +72,8 @@ export default class FriendConcept {
     void this.friends.createOne({ user1, user2 });
   }
 
-  private removePendingRequest(from: ObjectId, to: ObjectId) {
-    const request = this.requests.popOne({ from, to, status: "pending" });
+  private async removePendingRequest(from: ObjectId, to: ObjectId) {
+    const request = await this.requests.popOne({ from, to, status: "pending" });
     if (request === null) {
       throw new FriendRequestNotFoundError(from, to);
     }
