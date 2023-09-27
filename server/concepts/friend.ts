@@ -29,26 +29,22 @@ export default class FriendConcept {
     return { msg: "Sent request!" };
   }
 
-  async respondRequest(from: ObjectId, to: ObjectId, response: "accept" | "reject") {
-    const request = await this.requests.popOne({ from, to, status: "pending" });
-    if (request === null) {
-      throw new FriendRequestNotFoundError(from, to);
-    }
-    void this.requests.createOne({ from, to, status: response === "accept" ? "accepted" : "rejected" });
+  async acceptRequest(from: ObjectId, to: ObjectId) {
+    await this.removePendingRequest(from, to);
+    // Following two can be done in parallel, thus we use `void`
+    void this.requests.createOne({ from, to, status: "accepted" });
+    void this.addFriend(from, to);
+    return { msg: "Accepted request!" };
+  }
 
-    // if accepted, add a new friend
-    if (response === "accept") {
-      void this.addFriend(from, to);
-    }
-
-    return { msg: `Responded with ${response}!` };
+  async rejectRequest(from: ObjectId, to: ObjectId) {
+    await this.removePendingRequest(from, to);
+    await this.requests.createOne({ from, to, status: "rejected" });
+    return { msg: "Rejected request!" };
   }
 
   async removeRequest(from: ObjectId, to: ObjectId) {
-    const request = await this.requests.popOne({ from, to, status: "pending" });
-    if (request === null) {
-      throw new FriendRequestNotFoundError(from, to);
-    }
+    await this.removePendingRequest(from, to);
     return { msg: "Removed request!" };
   }
 
@@ -74,6 +70,14 @@ export default class FriendConcept {
 
   private async addFriend(user1: ObjectId, user2: ObjectId) {
     void this.friends.createOne({ user1, user2 });
+  }
+
+  private removePendingRequest(from: ObjectId, to: ObjectId) {
+    const request = this.requests.popOne({ from, to, status: "pending" });
+    if (request === null) {
+      throw new FriendRequestNotFoundError(from, to);
+    }
+    return request;
   }
 
   private async isNotFriends(u1: ObjectId, u2: ObjectId) {
