@@ -54,10 +54,10 @@ const operations: operation[] = [
     fields: { username: "input" },
   },
   {
-    name: "Get Posts",
+    name: "Get Posts (empty for all)",
     endpoint: "/api/posts",
     method: "GET",
-    fields: {},
+    fields: { author: "input" },
   },
   {
     name: "Create Post",
@@ -80,6 +80,7 @@ const operations: operation[] = [
 ];
 
 // Do not edit below here.
+// If you are interested in how this works, feel free to ask on forum!
 
 function updateResponse(code: string, response: string) {
   document.querySelector("#status-code")!.innerHTML = code;

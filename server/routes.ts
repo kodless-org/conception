@@ -1,4 +1,4 @@
-import { Filter, ObjectId } from "mongodb";
+import { ObjectId } from "mongodb";
 
 import { Router, getExpressRouter } from "./framework/router";
 
@@ -23,7 +23,7 @@ class Routes {
 
   @Router.get("/users/:username")
   async getUser(username: string) {
-    return (await User.getUsers(username))[0];
+    return await User.getUserByUsername(username);
   }
 
   @Router.post("/users")
@@ -59,8 +59,15 @@ class Routes {
   }
 
   @Router.get("/posts")
-  async getPosts(query: Filter<PostDoc>) {
-    return Responses.posts(await Post.read(query));
+  async getPosts(author?: string) {
+    let posts;
+    if (author) {
+      const id = (await User.getUserByUsername(author))._id;
+      posts = await Post.getByAuthor(id);
+    } else {
+      posts = await Post.getPosts({});
+    }
+    return Responses.posts(posts);
   }
 
   @Router.post("/posts")
@@ -95,25 +102,25 @@ class Routes {
     await Friend.removeFriend(user, friend);
   }
 
-  @Router.get("/requests")
+  @Router.get("/friend/requests")
   async getRequests(session: WebSessionDoc) {
     const user = WebSession.getUser(session);
     return await Responses.friendRequests(await Friend.getRequests(user));
   }
 
-  @Router.delete("/requests/:to")
+  @Router.delete("/friend/requests/:to")
   async removeFriendRequest(session: WebSessionDoc, to: ObjectId) {
     const user = WebSession.getUser(session);
     return await Friend.removeRequest(user, to);
   }
 
-  @Router.put("/requests/:from")
+  @Router.put("/friend/requests/:from")
   async respondFriendRequest(session: WebSessionDoc, from: ObjectId, response: string) {
     if (response !== "accept" && response !== "reject") {
       throw new BadValuesError("response needs to be 'accept' or 'reject'");
     }
     const user = WebSession.getUser(session);
-    return await Friend.respondRequest(user, from, response);
+    return await (response === "accept" ? Friend.acceptRequest(from, user) : Friend.rejectRequest(from, user));
   }
 
   @Router.post("/requests/:to")
