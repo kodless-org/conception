@@ -31,7 +31,7 @@ export default class WebSessionConcept {
 
   isLoggedIn(session: WebSessionDoc) {
     if (session.user === undefined) {
-      throw new UnauthenticatedError("Not logged in!");
+      throw new UnauthenticatedError("Must be logged in!");
     }
   }
 
