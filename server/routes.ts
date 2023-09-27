@@ -3,7 +3,6 @@ import { ObjectId } from "mongodb";
 import { Router, getExpressRouter } from "./framework/router";
 
 import { Friend, Post, User, WebSession } from "./app";
-import { BadValuesError } from "./concepts/errors";
 import { PostDoc, PostOptions } from "./concepts/post";
 import { UserDoc } from "./concepts/user";
 import { WebSessionDoc } from "./concepts/websession";
@@ -114,13 +113,16 @@ class Routes {
     return await Friend.removeRequest(user, to);
   }
 
-  @Router.put("/friend/requests/:from")
-  async respondFriendRequest(session: WebSessionDoc, from: ObjectId, response: string) {
-    if (response !== "accept" && response !== "reject") {
-      throw new BadValuesError("response needs to be 'accept' or 'reject'");
-    }
+  @Router.put("/friend/accept/:from")
+  async acceptFriendRequest(session: WebSessionDoc, from: ObjectId) {
     const user = WebSession.getUser(session);
-    return await (response === "accept" ? Friend.acceptRequest(from, user) : Friend.rejectRequest(from, user));
+    return await Friend.acceptRequest(from, user);
+  }
+
+  @Router.put("/friend/reject/:from")
+  async rejectFriendRequest(session: WebSessionDoc, from: ObjectId) {
+    const user = WebSession.getUser(session);
+    return await Friend.rejectRequest(from, user);
   }
 
   @Router.post("/requests/:to")
