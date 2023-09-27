@@ -121,7 +121,7 @@ export class FriendRequestAlreadyExistsError extends NotAllowedError {
     public readonly from: ObjectId,
     public readonly to: ObjectId,
   ) {
-    super("Friend request from {0} to {1} already exists!", from, to);
+    super("Friend request between {0} and {1} already exists!", from, to);
   }
 }
 
