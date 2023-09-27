@@ -32,7 +32,9 @@ export default class Responses {
    * by converting the ids into usernames.
    */
   static async friendRequests(requests: FriendRequestDoc[]) {
-    const usernames = await User.idsToUsernames(requests.map((request) => request.from).concat(requests.map((request) => request.to)));
+    const from = requests.map((request) => request.from);
+    const to = requests.map((request) => request.to);
+    const usernames = await User.idsToUsernames(from.concat(to));
     return requests.map((request, i) => ({ ...request, from: usernames[i], to: usernames[i + requests.length] }));
   }
 }

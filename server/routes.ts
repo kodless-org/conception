@@ -107,6 +107,13 @@ class Routes {
     return await Responses.friendRequests(await Friend.getRequests(user));
   }
 
+  @Router.post("/friend/requests/:to")
+  async sendFriendRequest(session: WebSessionDoc, to: ObjectId) {
+    await User.userExists(to);
+    const user = WebSession.getUser(session);
+    return await Friend.sendRequest(user, to);
+  }
+
   @Router.delete("/friend/requests/:to")
   async removeFriendRequest(session: WebSessionDoc, to: ObjectId) {
     const user = WebSession.getUser(session);
@@ -123,13 +130,6 @@ class Routes {
   async rejectFriendRequest(session: WebSessionDoc, from: ObjectId) {
     const user = WebSession.getUser(session);
     return await Friend.rejectRequest(from, user);
-  }
-
-  @Router.post("/requests/:to")
-  async sendFriendRequest(session: WebSessionDoc, to: ObjectId) {
-    await User.userExists(to);
-    const user = WebSession.getUser(session);
-    return await Friend.sendRequest(user, to);
   }
 }
 
