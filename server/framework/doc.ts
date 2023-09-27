@@ -9,8 +9,6 @@ import {
   Filter,
   FindOneAndUpdateOptions,
   FindOptions,
-  InsertManyResult,
-  InsertOneResult,
   ObjectId,
   OptionalUnlessRequiredId,
   ReplaceOptions,
@@ -60,38 +58,56 @@ export default class DocCollection<Schema extends BaseDoc> {
     }
   }
 
-  async createOne(item: Partial<Schema>): Promise<InsertOneResult> {
+  /**
+   * Add `item` to the collection. Returns the _id of the inserted document.
+   */
+  async createOne(item: Partial<Schema>): Promise<ObjectId> {
     this.sanitizeItem(item);
     item.dateCreated = new Date();
     item.dateUpdated = new Date();
-    return await this.collection.insertOne(item as OptionalUnlessRequiredId<Schema>);
+    return (await this.collection.insertOne(item as OptionalUnlessRequiredId<Schema>)).insertedId;
   }
 
-  async createMany(items: Partial<Schema>[], options?: BulkWriteOptions): Promise<InsertManyResult> {
+  /**
+   * Add `items` to the collection. Returns a record object of the form `{ <index>: <_id> }` for inserted documents.
+   */
+  async createMany(items: Partial<Schema>[], options?: BulkWriteOptions): Promise<Record<number, ObjectId>> {
     items.forEach((item) => {
       this.sanitizeItem(item);
       item.dateCreated = new Date();
       item.dateUpdated = new Date();
     });
-    return await this.collection.insertMany(items as OptionalUnlessRequiredId<Schema>[], options);
+    return (await this.collection.insertMany(items as OptionalUnlessRequiredId<Schema>[], options)).insertedIds;
   }
 
+  /**
+   * Read the document that matches `filter`. Returns `null` if no document matches.
+   */
   async readOne(filter: Filter<Schema>, options?: FindOptions): Promise<Schema | null> {
     this.sanitizeFilter(filter);
     return await this.collection.findOne<Schema>(filter, options);
   }
 
+  /**
+   * Read all documents that match `filter`.
+   */
   async readMany(filter: Filter<Schema>, options?: FindOptions): Promise<Schema[]> {
     this.sanitizeFilter(filter);
     return await this.collection.find<Schema>(filter, options).toArray();
   }
 
+  /**
+   * Replace the document that matches `filter` with `item`.
+   */
   async replaceOne(filter: Filter<Schema>, item: Partial<Schema>, options?: ReplaceOptions): Promise<UpdateResult<Schema> | Document> {
     this.sanitizeFilter(filter);
     this.sanitizeItem(item);
     return await this.collection.replaceOne(filter, item as WithoutId<Schema>, options);
   }
 
+  /**
+   * Update the document that matches `filter` based on existing fields in `update`.
+   */
   async updateOne(filter: Filter<Schema>, update: Partial<Schema>, options?: FindOneAndUpdateOptions): Promise<UpdateResult<Schema>> {
     this.sanitizeItem(update);
     this.sanitizeFilter(filter);
@@ -99,21 +115,34 @@ export default class DocCollection<Schema extends BaseDoc> {
     return await this.collection.updateOne(filter, { $set: update }, options);
   }
 
+  /**
+   * Delete the document that matches `filter`.
+   */
   async deleteOne(filter: Filter<Schema>, options?: DeleteOptions): Promise<DeleteResult> {
     this.sanitizeFilter(filter);
     return await this.collection.deleteOne(filter, options);
   }
 
+  /**
+   * Delete all documents that match `filter`.
+   */
   async deleteMany(filter: Filter<Schema>, options?: DeleteOptions): Promise<DeleteResult> {
     this.sanitizeFilter(filter);
     return await this.collection.deleteMany(filter, options);
   }
 
+  /**
+   * Count all documents that match `filter`.
+   */
   async count(filter: Filter<Schema>, options?: CountDocumentsOptions): Promise<number> {
     this.sanitizeFilter(filter);
     return await this.collection.countDocuments(filter, options);
   }
 
+  /**
+   * Pop one document that matches `filter`.
+   * This method is equivalent to calling `readOne` and `deleteOne`.
+   */
   async popOne(filter: Filter<Schema>): Promise<Schema | null> {
     this.sanitizeFilter(filter);
     const one = await this.readOne(filter);
