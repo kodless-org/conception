@@ -1,0 +1,10 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+authors:
+- family-names: "Namazov"
+  given-names: "Abutalib"
+  orcid: "https://orcid.org/0009-0002-0063-2086"
+title: "Conception: Build Web Apps using Concepts"
+version: 1.0.0
+date-released: 2023-09-27
+url: "https://github.com/BarishNamazov/conception"
