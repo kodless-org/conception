@@ -1,5 +1,5 @@
 type HttpMethod = "GET" | "POST" | "PUT" | "DELETE" | "PATCH";
-type InputTag = "input" | "textarea";
+type InputTag = "input" | "textarea" | "json";
 type Field = InputTag | { [key: string]: Field };
 type Fields = Record<string, Field>;
 
@@ -119,10 +119,11 @@ async function request(method: HttpMethod, endpoint: string, params?: unknown) {
 function fieldsToHtml(fields: Record<string, Field>, indent = 0, prefix = ""): string {
   return Object.entries(fields)
     .map(([name, tag]) => {
+      const htmlTag = tag === "json" ? "textarea" : tag;
       return `
         <div class="field" style="margin-left: ${indent}px">
           <label>${name}:
-          ${typeof tag === "string" ? `<${tag} name="${prefix}${name}"></${tag}>` : fieldsToHtml(tag, indent + 10, prefix + name + ".")}
+          ${typeof tag === "string" ? `<${htmlTag} name="${prefix}${name}"></${htmlTag}>` : fieldsToHtml(tag, indent + 10, prefix + name + ".")}
           </label>
         </div>`;
     })
@@ -174,6 +175,13 @@ async function submitEventHandler(e: Event) {
     delete reqData[key];
     return param;
   });
+
+  const op = operations.find((op) => op.endpoint === endpoint && op.method === $method);
+  for (const [key, val] of Object.entries(reqData)) {
+    if (op?.fields[key] === "json") {
+      reqData[key] = JSON.parse(val as string);
+    }
+  }
 
   const data = prefixedRecordIntoObject(reqData as Record<string, string>);
 
