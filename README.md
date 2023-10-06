@@ -13,10 +13,10 @@ Run `npm install` to install dependencies.
 ## Creating MongoDb Atlas Instance
 To run the server, you need to create a MongoDb Atlas instance and connect your project. Feel free to follow the instructions below or use these [slides](https://docs.google.com/presentation/d/1HJ4Lz1a2IH5oKu21fQGYgs8G2irtMqnVI9vWDheGfKM/edit?usp=sharing).
 1. Create your [MongoDB Atlas](https://www.mongodb.com/cloud/atlas/register) account.
-2. When selecting a template, choose the __free__ option, M0. 
-3. At the Security Quickstart page, select how you want to authenticate your connection and keep the rest of the defaults.
-4. Once created, click the __CONNECT__ button, select __driver__, and copy the srv connection string. If using username and password, the url should look something like this: `mongodb+srv://<username>:<password>@cluster0.p82ijqd.mongodb.net/?retryWrites=true&w=majority`. Make sure to replace username and password with your actual values.
-5. Now go to your project files and create a new file at the root directory called `.env` (don't forget the 'dot' at the front). Add the line (without `<` and `>`)
+2. When selecting a template, choose the __free__ option, M0.
+4. At the Security Quickstart page, select how you want to authenticate your connection and keep the rest of the defaults. Make sure to allow access to all IPs as shown in [this slide](https://docs.google.com/presentation/d/1HJ4Lz1a2IH5oKu21fQGYgs8G2irtMqnVI9vWDheGfKM/edit#slide=id.g167b96ecbf8_0_0).
+5. Once created, click the __CONNECT__ button, select __driver__, and copy the srv connection string. If using username and password, the url should look something like this: `mongodb+srv://<username>:<password>@cluster0.p82ijqd.mongodb.net/?retryWrites=true&w=majority`. Make sure to replace username and password with your actual values.
+6. Now go to your project files and create a new file at the root directory called `.env` (don't forget the 'dot' at the front). Add the line (without `<` and `>`)
     ```
     MONGO_SRV=<connection url>
     ```
@@ -46,12 +46,12 @@ so your session will be persisted across server restarts.
 
 ## Deploying to Vercel
 
-1. Fork this repo.
-2. Create a new project on Vercel and link it to your GitHub project.
-3. Under "Build & Development Settings", change "Output Directory" to `dist/public`.
-4. Add the following environment variables to your Vercel project:
+1. Create a new project on Vercel and link it to your GitHub project.
+2. Under "Build & Development Settings", change "Output Directory" to `dist/public`.
+3. Add the following environment variables to your Vercel project:
 Key: `MONGO_SRV`, Value: `<your mongo connection string from .env file>`
-5. Deploy!
+Note: only paste the right hand value after `=` (without `<` and `>`), i.e. `MONGO_SRV=<your mongo connection string>`
+4. Deploy!
 
 ## Understanding the Structure
 
