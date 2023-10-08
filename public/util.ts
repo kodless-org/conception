@@ -176,8 +176,13 @@ async function submitEventHandler(e: Event) {
     return param;
   });
 
-  const op = operations.find((op) => op.endpoint === endpoint && op.method === $method);
-  for (const [key, val] of Object.entries(reqData)) {
+  const op = operations.find((op) => op.endpoint === $endpoint && op.method === $method);
+  const pairs = Object.entries(reqData);
+  for (const [key, val] of pairs) {
+    if (val === "") {
+      delete reqData[key];
+      continue;
+    }
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const type = key.split(".").reduce((obj, key) => obj[key], op?.fields as any);
     if (type === "json") {
