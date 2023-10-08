@@ -178,7 +178,9 @@ async function submitEventHandler(e: Event) {
 
   const op = operations.find((op) => op.endpoint === endpoint && op.method === $method);
   for (const [key, val] of Object.entries(reqData)) {
-    if (op?.fields[key] === "json") {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const type = key.split(".").reduce((obj, key) => obj[key], op?.fields as any);
+    if (type === "json") {
       reqData[key] = JSON.parse(val as string);
     }
   }
