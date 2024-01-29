@@ -1,0 +1,22 @@
+I am writing my routes using concepts. Errors are automatically handled in my backend framework. The parameters to the decorated function are matched by names to first request parameters, then query and then body (except for "session", "query", "body", and "params" names in which they are taken from request data directly). Remember that in routes, the _id is passed in a string form, and you have to convert it to ObjectId like new ObjectId(_id) if needed. Here's two example routes:
+
+@Router.get("/session")
+async getSessionUser(session: WebSessionDoc) {
+  const user = WebSession.getUser(session);
+  return await User.getUserById(user);
+}
+
+@Router.post("/users")
+async createUser(session: WebSessionDoc, username: string, password: string) {
+  WebSession.isLoggedOut(session);
+  return await User.create(username, password);
+}
+
+
+Here are my concept specs:
+
+<SPEC>
+
+Remember to respond with only code and nothing else.
+
+Write me a route for <ROUTE> that <EXPLAIN ROUTE, BE SPECIFIC AS YOU WANT>.

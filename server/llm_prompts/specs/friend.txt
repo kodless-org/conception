@@ -1,0 +1,20 @@
+FriendshipDoc = {
+  user1: ObjectId;
+  user2: ObjectId;
+}
+
+FriendRequestDoc = {
+  from: ObjectId;
+  to: ObjectId;
+  status: "pending" | "rejected" | "accepted";
+}
+
+FriendConcept = {
+  async getRequests: (user: ObjectId) => FriendRequestDoc[]; // gets all friend requests for a user
+  async sendRequest: (from: ObjectId, to: ObjectId) => {msg: string}; // throws error if request already exists or if users are already friends
+  async acceptRequest: (from: ObjectId, to: ObjectId) => {msg: string}; // throws error if request doesn't exist
+  async rejectRequest: (from: ObjectId, to: ObjectId) => {msg: string}; // throws error if request doesn't exist
+  async removeRequest: (from: ObjectId, to: ObjectId) => {msg: string}; // throws error if request doesn't exist
+  async removeFriend: (user: ObjectId, friend: ObjectId) => {msg: string}; // throws error if friendship doesn't exist
+  async getFriends: (user: ObjectId) => ObjectId[]; // gets list of friends for a user
+}

@@ -28,7 +28,7 @@ export interface BaseDoc {
 export type WithoutBase<T extends BaseDoc> = Omit<T, keyof BaseDoc>;
 
 export default class DocCollection<Schema extends BaseDoc> {
-  protected readonly collection: Collection<Schema>;
+  public readonly collection: Collection<Schema>;
   private static collectionNames: Set<string> = new Set();
 
   constructor(public readonly name: string) {

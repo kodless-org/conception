@@ -1,0 +1,141 @@
+<INSERT DocCollection.txt HERE SO GPT KNOWS HOW TO USE IT>
+
+I am implementing my app using what I call concepts, an independent block of the software. Concepts don't know about each-other's existance. For example, a concept called Post looks like this:
+
+import { Filter, ObjectId } from "mongodb";
+
+import DocCollection, { BaseDoc } from "../framework/doc";
+import { NotAllowedError, NotFoundError } from "./errors";
+
+export interface PostOptions {
+  backgroundColor?: string;
+}
+
+export interface PostDoc extends BaseDoc {
+  author: ObjectId;
+  content: string;
+  options?: PostOptions;
+}
+
+export default class PostConcept {
+  public readonly posts: DocCollection<PostDoc>;
+  constructor(collectionName: string) {
+    this.posts = new DocCollection<PostDoc>(collectionName);
+    void this.posts.collection.createIndex({ author: 1 });
+  }
+  async create(author: ObjectId, content: string, options?: PostOptions) {
+    const _id = await this.posts.createOne({ author, content, options });
+    return { msg: "Post successfully created!", post: await this.posts.readOne({ _id }) };
+  }
+  async getPosts(query: Filter<PostDoc>) {
+    const posts = await this.posts.readMany(query, {sort: { dateUpdated: -1 },});
+    return posts;
+  }
+  async getByAuthor(author: ObjectId) {
+    return await this.getPosts({ author });
+  }
+  async update(_id: ObjectId, update: Partial<PostDoc>) {
+    this.sanitizeUpdate(update);
+    await this.posts.updateOne({ _id }, update);
+    return { msg: "Post successfully updated!" };
+  }
+  async delete(_id: ObjectId) {
+    await this.posts.deleteOne({ _id });
+    return { msg: "Post deleted successfully!" };
+  }
+  async isAuthor(user: ObjectId, _id: ObjectId) {
+    const post = await this.posts.readOne({ _id });
+    if (!post) { throw new NotFoundError(`Post ${_id} does not exist!`); }
+    if (post.author.toString() !== user.toString()) { throw new PostAuthorNotMatchError(user, _id); }
+  }
+  private sanitizeUpdate(update: Partial<PostDoc>) {
+    // Make sure the update cannot change the author.
+    const allowedUpdates = ["content", "options"];
+    for (const key in update) {
+      if (!allowedUpdates.includes(key)) {
+        throw new NotAllowedError(`Cannot update '${key}' field!`);
+      }
+    }
+  }
+}
+export class PostAuthorNotMatchError extends NotAllowedError {
+  constructor(public readonly author: ObjectId, public readonly _id: ObjectId) {
+    super("{0} is not the author of post {1}!", author, _id);
+  }
+}
+
+And a concept called User looks like this:
+
+import { ObjectId } from "mongodb";
+import DocCollection, { BaseDoc } from "../framework/doc";
+import { BadValuesError, NotAllowedError, NotFoundError } from "./errors";
+
+export interface UserDoc extends BaseDoc {
+  username: string;
+  password: string;
+}
+export default class UserConcept {
+  public readonly users: DocCollection<UserDoc>;
+  constructor(collectionName: string) {
+    this.users = new DocCollection<UserDoc>(collectionName);
+    void this.users.collection.createIndex({ username: 1 }, { unique: true });
+  }
+  async create(username: string, password: string) {
+    await this.canCreate(username, password);
+    const _id = await this.users.createOne({ username, password });
+    return { msg: "User created successfully!", user: await this.users.readOne({ _id }) };
+  }
+  private sanitizeUser(user: UserDoc) {
+    const { password, ...rest } = user; // remove password
+    return rest;
+  }
+  async getUserById(_id: ObjectId) {
+    const user = await this.users.readOne({ _id });
+    if (user === null) { throw new NotFoundError(`User not found!`); }
+    return this.sanitizeUser(user);
+  }
+  async getUserByUsername(username: string) {
+    const user = await this.users.readOne({ username });
+    if (user === null) { throw new NotFoundError(`User not found!`); }
+    return this.sanitizeUser(user);
+  }
+  async idsToUsernames(ids: ObjectId[]) {
+    const users = await this.users.readMany({ _id: { $in: ids } });
+    // Store strings in Map because ObjectId comparison by reference is wrong
+    const idToUser = new Map(users.map((user) => [user._id.toString(), user]));
+    return ids.map((id) => idToUser.get(id.toString())?.username ?? "DELETED_USER");
+  }
+  async getUsers(username?: string) {
+    // If username is undefined, return all users by applying empty filter
+    const filter = username ? { username } : {};
+    const users = (await this.users.readMany(filter)).map(this.sanitizeUser);
+    return users;
+  }
+  async authenticate(username: string, password: string) {
+    const user = await this.users.readOne({ username, password });
+    if (!user) { throw new NotAllowedError("Username or password is incorrect."); }
+    return { msg: "Successfully authenticated.", _id: user._id };
+  }
+  async update(_id: ObjectId, update: Partial<UserDoc>) {
+    if (update.username !== undefined) { await this.isUsernameUnique(update.username); }
+    await this.users.updateOne({ _id }, update);
+    return { msg: "User updated successfully!" };
+  }
+  async delete(_id: ObjectId) {
+    await this.users.deleteOne({ _id });
+    return { msg: "User deleted!" };
+  }
+  async userExists(_id: ObjectId) {
+    const maybeUser = await this.users.readOne({ _id });
+    if (maybeUser === null) { throw new NotFoundError(`User not found!`);}
+  }
+  private async canCreate(username: string, password: string) {
+    if (!username || !password) { throw new BadValuesError("Username and password must be non-empty!"); }
+    await this.isUsernameUnique(username);
+  }
+  private async isUsernameUnique(username: string) {
+    if (await this.users.readOne({ username })) { throw new NotAllowedError(`User with username ${username} already exists!`); }
+  }
+}
+
+Now, implement me a concept called <NAME> that <DESCRIBE, BE SPECIFIC AS POSSIBLE>. Do not explain, only answer with a code.

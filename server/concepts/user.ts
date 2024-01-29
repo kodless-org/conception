@@ -8,7 +8,13 @@ export interface UserDoc extends BaseDoc {
 }
 
 export default class UserConcept {
-  public readonly users = new DocCollection<UserDoc>("users");
+  public readonly users: DocCollection<UserDoc>;
+
+  constructor(collectionName: string) {
+    this.users = new DocCollection<UserDoc>(collectionName);
+
+    void this.users.collection.createIndex({ username: 1 }, { unique: true });
+  }
 
   async create(username: string, password: string) {
     await this.canCreate(username, password);

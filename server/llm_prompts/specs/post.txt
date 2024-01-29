@@ -1,0 +1,14 @@
+PostDoc = {
+  author: ObjectId;
+  content: string;
+  options?: PostOptions;
+}
+
+PostConcept = {
+  async create: (author: ObjectId, content: string, options?: PostOptions) => {msg: string, post: PostDoc}; // creates a new post
+  async getPosts: (query: Filter<PostDoc>) => PostDoc[]; // gets posts based on a query
+  async getByAuthor: (author: ObjectId) => PostDoc[]; // gets posts by a specific author
+  async update: (_id: ObjectId, update: Partial<PostDoc>) => {msg: string}; // updates a post, throws error if update is not allowed
+  async delete: (_id: ObjectId) => {msg: string}; // deletes a post
+  async isAuthor: (user: ObjectId, _id: ObjectId) => void; // throws error if user is not the author of the post
+}

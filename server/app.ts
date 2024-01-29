@@ -5,6 +5,6 @@ import WebSessionConcept from "./concepts/websession";
 
 // App Definition using concepts
 export const WebSession = new WebSessionConcept();
-export const User = new UserConcept();
-export const Post = new PostConcept();
+export const User = new UserConcept("users");
+export const Post = new PostConcept("posts");
 export const Friend = new FriendConcept();

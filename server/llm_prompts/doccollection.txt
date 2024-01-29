@@ -1,0 +1,16 @@
+DocCollection is a class that manages a collection of documents in a MongoDB database: DocCollection<Schema extends BaseDoc>. The constructor takes in the collection name.
+
+You can access the original MongoDB collection object with the collection property.
+
+It has the following public methods:
+
+async createOne(item: Partial<Schema>): Promise<ObjectId>
+async createMany(items: Partial<Schema>[], options?: BulkWriteOptions): Promise<Record<number, ObjectId>>
+async readOne(filter: Filter<Schema>, options?: FindOptions): Promise<Schema | null>
+async readMany(filter: Filter<Schema>, options?: FindOptions): Promise<Schema[]>
+async replaceOne(filter: Filter<Schema>, item: Partial<Schema>, options?: ReplaceOptions): Promise<UpdateResult<Schema> | Document>
+async updateOne(filter: Filter<Schema>, update: Partial<Schema>, options?: FindOneAndUpdateOptions): Promise<UpdateResult<Schema>>
+async deleteOne(filter: Filter<Schema>, options?: DeleteOptions): Promise<DeleteResult>
+async deleteMany(filter: Filter<Schema>, options?: DeleteOptions): Promise<DeleteResult>
+
+Use these methods when possible because it automatically handles additional fields like dateCreated and dateUpdated, but you can also use the MongoDB collection object directly (don't forget to update these fields if needed).

@@ -1,0 +1,59 @@
+FriendshipDoc = {
+  user1: ObjectId;
+  user2: ObjectId;
+}
+
+FriendRequestDoc = {
+  from: ObjectId;
+  to: ObjectId;
+  status: "pending" | "rejected" | "accepted";
+}
+
+FriendConcept = {
+  async getRequests: (user: ObjectId) => FriendRequestDoc[]; // gets all friend requests for a user
+  async sendRequest: (from: ObjectId, to: ObjectId) => {msg: string}; // throws error if request already exists or if users are already friends
+  async acceptRequest: (from: ObjectId, to: ObjectId) => {msg: string}; // throws error if request doesn't exist
+  async rejectRequest: (from: ObjectId, to: ObjectId) => {msg: string}; // throws error if request doesn't exist
+  async removeRequest: (from: ObjectId, to: ObjectId) => {msg: string}; // throws error if request doesn't exist
+  async removeFriend: (user: ObjectId, friend: ObjectId) => {msg: string}; // throws error if friendship doesn't exist
+  async getFriends: (user: ObjectId) => ObjectId[]; // gets list of friends for a user
+}
+PostDoc = {
+  author: ObjectId;
+  content: string;
+  options?: PostOptions;
+}
+
+PostConcept = {
+  async create: (author: ObjectId, content: string, options?: PostOptions) => {msg: string, post: PostDoc}; // creates a new post
+  async getPosts: (query: Filter<PostDoc>) => PostDoc[]; // gets posts based on a query
+  async getByAuthor: (author: ObjectId) => PostDoc[]; // gets posts by a specific author
+  async update: (_id: ObjectId, update: Partial<PostDoc>) => {msg: string}; // updates a post, throws error if update is not allowed
+  async delete: (_id: ObjectId) => {msg: string}; // deletes a post
+  async isAuthor: (user: ObjectId, _id: ObjectId) => void; // throws error if user is not the author of the post
+}
+UserDoc = {
+  username: string;
+  password: string;
+}
+
+UserConcept = {
+  async create: (username: string, password: string) => {msg: string, user: UserDoc}; // throws error if can't create user
+  async getUserById: (_id: ObjectId) => UserDoc; // throws error if user doesn't exist
+  async getUserByUsername: (username: string) => UserDoc; // throws error if user doesn't exist
+  async idsToUsernames: (ids: ObjectId[]) => string[]; // replaces non-existent user with "DELETED_USER"
+  async getUsers: (username?: string) => UserDoc[]; // gets all users or users by username
+  async authenticate: (username: string, password: string) => {msg: string, _id: ObjectId}; // throws error if can't authenticate
+  async update: (_id: ObjectId, update: Partial<UserDoc>) => {msg: string}; // throws error if can't update
+  async delete: (_id: ObjectId) => {msg: string}; // throws error if user doesn't exist
+  async userExists: (_id: ObjectId) => void; // throws error if user doesn't exist
+}
+WebSessionDoc = SessionData;
+
+WebSessionConcept = {
+  start: (session: WebSessionDoc, user: ObjectId) => void; // throws error if already logged in
+  end: (session: WebSessionDoc) => void; // throws error if not logged in
+  getUser: (session: WebSessionDoc) => ObjectId; // throws error if not logged in
+  isLoggedIn: (session: WebSessionDoc) => void; // throws error if not logged in
+  isLoggedOut: (session: WebSessionDoc) => void; // throws error if already logged in
+}

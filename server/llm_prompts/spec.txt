@@ -1,0 +1,18 @@
+I need a spec that explains my document and concept interfaces very briefly (only public methods). For example, it might look like this for a given code:
+
+UserDoc = {
+  username: string;
+  password: string;
+}
+
+UserConcept = {
+  async create: (username: string, password: string) => {msg: string, user: UserDoc}; // throws error if username already exists
+  async getUser: (_id: ObjectId) => UserDoc; // throws error if user doesn't exist
+  async getUserByUsername: (username: string) => UserDoc; // throws error if user doesn't exist
+  async idsToUsernames: (ids: ObjectId[]) => string[]; // replaces non-existent user with "DELETED" username
+  async authenticate: (username: string, password: string) => {msg: string, _id: ObjectId}; // throws error if can't authenticate
+  async updatePassword: (_id: ObjectId, password: string) => {msg: string, user: UserDoc}; // throws error if user doesn't exist
+  async delete: (_id: ObjectId) => {msg: string}; // throws error if user doesn't exist
+}
+
+Generate a similar spec for this code that looks exactly like above. Remember, only public methods. Don't reply with any other message, just the spec as in the example.

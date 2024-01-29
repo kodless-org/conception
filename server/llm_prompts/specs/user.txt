@@ -1,0 +1,16 @@
+UserDoc = {
+  username: string;
+  password: string;
+}
+
+UserConcept = {
+  async create: (username: string, password: string) => {msg: string, user: UserDoc}; // throws error if can't create user
+  async getUserById: (_id: ObjectId) => UserDoc; // throws error if user doesn't exist
+  async getUserByUsername: (username: string) => UserDoc; // throws error if user doesn't exist
+  async idsToUsernames: (ids: ObjectId[]) => string[]; // replaces non-existent user with "DELETED_USER"
+  async getUsers: (username?: string) => UserDoc[]; // gets all users or users by username
+  async authenticate: (username: string, password: string) => {msg: string, _id: ObjectId}; // throws error if can't authenticate
+  async update: (_id: ObjectId, update: Partial<UserDoc>) => {msg: string}; // throws error if can't update
+  async delete: (_id: ObjectId) => {msg: string}; // throws error if user doesn't exist
+  async userExists: (_id: ObjectId) => void; // throws error if user doesn't exist
+}

@@ -1,0 +1,9 @@
+WebSessionDoc = SessionData;
+
+WebSessionConcept = {
+  start: (session: WebSessionDoc, user: ObjectId) => void; // throws error if already logged in
+  end: (session: WebSessionDoc) => void; // throws error if not logged in
+  getUser: (session: WebSessionDoc) => ObjectId; // throws error if not logged in
+  isLoggedIn: (session: WebSessionDoc) => void; // throws error if not logged in
+  isLoggedOut: (session: WebSessionDoc) => void; // throws error if already logged in
+}
